@@ -12,9 +12,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CodeForceslyTheme {
-//                ProfileScreen(ProfileViewModel())
-//                ContestsScreen(ContestsViewModel())
-//                ProblemsScreen(ProblemsViewModel()) { }
                 AppNavigation()
             }
         }

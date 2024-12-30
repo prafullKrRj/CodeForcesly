@@ -1,20 +1,20 @@
 package com.prafullkumar.codeforcesly.problem
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.prafullkumar.codeforcesly.problem.data.ProblemsRepository
 import com.prafullkumar.codeforcesly.problem.model.Problem
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 
 enum class SortOrder {
     RATING_ASC, RATING_DESC, NAME_ASC, NAME_DESC
 }
+
 data class ProblemsUiState(
     val problems: List<Problem> = emptyList(),
     val isLoading: Boolean = false,
@@ -24,26 +24,22 @@ data class ProblemsUiState(
     val selectedTags: Set<String> = emptySet(),
     val sortOrder: SortOrder = SortOrder.RATING_DESC
 )
-class ProblemsViewModel : ViewModel() {
+
+class ProblemsViewModel(
+    private val repository: ProblemsRepository,
+) : ViewModel() {
     private val _uiState = MutableStateFlow(ProblemsUiState())
     val uiState: StateFlow<ProblemsUiState> = _uiState.asStateFlow()
 
     init {
-        fetchProblems()
-    }
-
-    companion object {
-        private val apiService = Retrofit.Builder()
-            .baseUrl("https://codeforces.com/api/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build().create(ProblemsApiService::class.java)
+        if (_uiState.value.problems.isEmpty()) fetchProblems()
     }
 
     private fun fetchProblems() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true) }
             try {
-                val response = apiService.getProblems("https://codeforces.com/api/problemset.problems?tags=")
+                val response = repository.getAllProblems()
                 if (response.status == "OK") {
                     val problemList = response.result.problems
                     _uiState.update {
@@ -60,9 +56,7 @@ class ProblemsViewModel : ViewModel() {
                         )
                     }
                 }
-                Log.d("ProblemsViewModel", "Problems: ${response.result.problems}")
             } catch (e: Exception) {
-                Log.d("ProblemsViewModel", "Error: ${e.message}")
                 _uiState.update {
                     it.copy(
                         isLoading = false,

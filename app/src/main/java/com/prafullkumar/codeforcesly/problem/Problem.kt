@@ -35,7 +35,6 @@ import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -60,10 +59,6 @@ fun ProblemsScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Codeforces Problems") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
             )
         }
     ) { padding ->
@@ -212,7 +207,9 @@ private fun ProblemsList(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(problems) { problem ->
+        items(problems, key = {
+            it.index + "-" + it.name + it.rating
+        }) { problem ->
             ProblemCard(
                 problem = problem,
                 onClick = { onProblemClick(problem) },
@@ -306,7 +303,7 @@ private fun ErrorMessage(error: String) {
 }
 
 @Composable
-private fun getRatingColor(rating: Int): Color {
+private fun getRatingColor(rating: Double): Color {
     return when {
         rating < 1200 -> Color.Gray
         rating < 1400 -> Color.Green

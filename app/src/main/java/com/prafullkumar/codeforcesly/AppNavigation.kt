@@ -1,15 +1,11 @@
 package com.prafullkumar.codeforcesly
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -24,8 +20,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -33,14 +29,22 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import com.prafullkumar.codeforcesly.contests.ContestsScreen
 import com.prafullkumar.codeforcesly.contests.ContestsViewModel
+import com.prafullkumar.codeforcesly.friends.FriendsScreen
+import com.prafullkumar.codeforcesly.friends.FriendsViewModel
+import com.prafullkumar.codeforcesly.friends.data.FriendsDatabase
+import com.prafullkumar.codeforcesly.friends.data.FriendsRepository
+import com.prafullkumar.codeforcesly.login.OnboardingScreen
+import com.prafullkumar.codeforcesly.login.OnboardingViewModel
+import com.prafullkumar.codeforcesly.login.data.UserDatabase
+import com.prafullkumar.codeforcesly.login.data.UserRepository
 import com.prafullkumar.codeforcesly.problem.ProblemsScreen
 import com.prafullkumar.codeforcesly.problem.ProblemsViewModel
+import com.prafullkumar.codeforcesly.problem.data.ProblemsRepository
 
 // Navigation.kt
 sealed class Screen(val route: String) {
     object Auth {
         data object Login : Screen("login")
-        data object Register : Screen("register")
     }
 
     object Main {
@@ -59,23 +63,27 @@ fun AppNavigation() {
     var isAuthenticated by remember { mutableStateOf(false) }
 
     NavHost(
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding(),
         navController = navController,
         startDestination = if (isAuthenticated) "main" else "auth"
     ) {
         // Auth Navigation Graph
         navigation(startDestination = Screen.Auth.Login.route, route = "auth") {
             composable(Screen.Auth.Login.route) {
-                LoginScreen(
-                    onLoginSuccess = {
-                        isAuthenticated = true
-                        navController.navigate("main") {
-                            popUpTo("auth") { inclusive = true }
-                        }
+                OnboardingScreen(
+                    OnboardingViewModel(
+                        UserRepository(
+                            userDao = UserDatabase.getDatabase(LocalContext.current).userDao()
+                        )
+                    )
+                ) {
+                    isAuthenticated = true
+                    navController.navigate("main") {
+                        popUpTo("auth") { inclusive = true }
                     }
-                )
-            }
-            composable(Screen.Auth.Register.route) {
-                RegisterScreen()
+                }
             }
         }
 
@@ -112,6 +120,7 @@ fun AppNavigation() {
 // MainScreen.kt
 @Composable
 fun MainScreen(navController: NavController, startDestination: String) {
+    val context = LocalContext.current
     Scaffold(
         bottomBar = {
             NavigationBar(
@@ -159,41 +168,34 @@ fun MainScreen(navController: NavController, startDestination: String) {
             }
         }
     ) { paddingValues ->
-        when (startDestination) {
-            Screen.Main.Profile.route -> ProfileScreen()
-            Screen.Main.Contests.route -> ContestsScreen(ContestsViewModel())
-            Screen.Main.Friends.route -> FriendsScreen()
-            Screen.Main.Problems.route -> ProblemsScreen(ProblemsViewModel()) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(paddingValues), contentAlignment = Alignment.Center
+        ) {
+            when (startDestination) {
+                Screen.Main.Profile.route -> ProfileScreen()
+                Screen.Main.Contests.route -> ContestsScreen(ContestsViewModel())
+                Screen.Main.Friends.route -> FriendsScreen(
+                    navController,
+                    FriendsViewModel(
+                        FriendsRepository(
+                            friendDao = FriendsDatabase.getDatabase(context).friendDao(),
+                        )
+                    )
+                )
 
+                Screen.Main.Problems.route -> ProblemsScreen(
+                    ProblemsViewModel(
+                        ProblemsRepository(
+                            context
+                        )
+                    )
+                ) {
+
+                }
             }
         }
-    }
-}
-
-// Placeholder Screen Composables
-@Composable
-fun LoginScreen(onLoginSuccess: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("Login Screen", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onLoginSuccess) {
-            Text("Login")
-        }
-    }
-}
-
-@Composable
-fun RegisterScreen() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("Register Screen", style = MaterialTheme.typography.headlineMedium)
     }
 }
 
@@ -204,16 +206,5 @@ fun ProfileScreen() {
         contentAlignment = Alignment.Center
     ) {
         Text("Profile Screen", style = MaterialTheme.typography.headlineMedium)
-    }
-}
-
-
-@Composable
-fun FriendsScreen() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Friends Screen", style = MaterialTheme.typography.headlineMedium)
     }
 }

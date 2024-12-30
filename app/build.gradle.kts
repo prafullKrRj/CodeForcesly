@@ -1,7 +1,11 @@
 plugins {
+//    kotlin("kapt")
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.devtools.ksp")
+//    id("dagger.hilt.android.plugin")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 android {
@@ -65,4 +69,20 @@ dependencies {
 
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+//    implementation(libs.hilt.android)
+//    kapt(libs.hilt.compiler)
+
+    // Hilt Navigation Compose
+//    implementation(libs.androidx.hilt.navigation.compose)
+
+//    ksp(libs.hilt.compiler)
+
+    implementation(libs.kotlinx.serialization.json)
+
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
+
+    // optional - Kotlin Extensions and Coroutines support for Room
+    implementation(libs.androidx.room.ktx)
 }
