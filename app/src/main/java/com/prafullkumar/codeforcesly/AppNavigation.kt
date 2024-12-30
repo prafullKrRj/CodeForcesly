@@ -31,6 +31,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
+import com.prafullkumar.codeforcesly.contests.ContestsScreen
+import com.prafullkumar.codeforcesly.contests.ContestsViewModel
+import com.prafullkumar.codeforcesly.problem.ProblemsScreen
+import com.prafullkumar.codeforcesly.problem.ProblemsViewModel
 
 // Navigation.kt
 sealed class Screen(val route: String) {
@@ -112,7 +116,6 @@ fun MainScreen(navController: NavController, startDestination: String) {
         bottomBar = {
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                tonalElevation = 8.dp
             ) {
                 NavigationBarItem(
                     icon = { Icon(Icons.Filled.Person, contentDescription = "Profile") },
@@ -156,16 +159,12 @@ fun MainScreen(navController: NavController, startDestination: String) {
             }
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when (startDestination) {
-                Screen.Main.Profile.route -> ProfileScreen()
-                Screen.Main.Contests.route -> ContestsScreen()
-                Screen.Main.Friends.route -> FriendsScreen()
-                Screen.Main.Problems.route -> ProblemsScreen()
+        when (startDestination) {
+            Screen.Main.Profile.route -> ProfileScreen()
+            Screen.Main.Contests.route -> ContestsScreen(ContestsViewModel())
+            Screen.Main.Friends.route -> FriendsScreen()
+            Screen.Main.Problems.route -> ProblemsScreen(ProblemsViewModel()) {
+
             }
         }
     }
@@ -208,15 +207,6 @@ fun ProfileScreen() {
     }
 }
 
-@Composable
-fun ContestsScreen() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Contests Screen", style = MaterialTheme.typography.headlineMedium)
-    }
-}
 
 @Composable
 fun FriendsScreen() {
@@ -225,15 +215,5 @@ fun FriendsScreen() {
         contentAlignment = Alignment.Center
     ) {
         Text("Friends Screen", style = MaterialTheme.typography.headlineMedium)
-    }
-}
-
-@Composable
-fun ProblemsScreen() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Problems Screen", style = MaterialTheme.typography.headlineMedium)
     }
 }
