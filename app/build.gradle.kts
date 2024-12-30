@@ -1,10 +1,9 @@
 plugins {
-//    kotlin("kapt")
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id ("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
-//    id("dagger.hilt.android.plugin")
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
@@ -14,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "com.prafullkumar.codeforcesly"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -71,7 +70,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
 //    implementation(libs.hilt.android)
-//    kapt(libs.hilt.compiler)
+//    ksp(libs.hilt.compiler)
 
     // Hilt Navigation Compose
 //    implementation(libs.androidx.hilt.navigation.compose)
@@ -80,9 +79,17 @@ dependencies {
 
     implementation(libs.kotlinx.serialization.json)
 
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.android.compiler)
+    ksp(libs.hilt.compiler)
+    implementation(libs.symbol.processing.api)
+    implementation(libs.androidx.hilt.navigation.compose)
+
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
-
-    // optional - Kotlin Extensions and Coroutines support for Room
     implementation(libs.androidx.room.ktx)
+//
+
+    implementation("androidx.paging:paging-compose:3.3.5")
+    implementation(libs.accompanist.swiperefresh)
 }

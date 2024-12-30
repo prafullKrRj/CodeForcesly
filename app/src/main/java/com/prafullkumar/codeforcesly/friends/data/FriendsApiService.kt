@@ -1,6 +1,6 @@
 package com.prafullkumar.codeforcesly.friends.data
 
-import com.prafullkumar.codeforcesly.friends.model.UserInfoResponse
+import com.prafullkumar.codeforcesly.common.model.userinfo.UserInfoResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 

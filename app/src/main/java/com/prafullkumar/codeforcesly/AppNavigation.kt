@@ -1,5 +1,6 @@
 package com.prafullkumar.codeforcesly
 
+import android.content.Context
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -7,39 +8,29 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
-import com.prafullkumar.codeforcesly.contests.ContestsScreen
-import com.prafullkumar.codeforcesly.contests.ContestsViewModel
-import com.prafullkumar.codeforcesly.friends.FriendsScreen
-import com.prafullkumar.codeforcesly.friends.FriendsViewModel
-import com.prafullkumar.codeforcesly.friends.data.FriendsDatabase
-import com.prafullkumar.codeforcesly.friends.data.FriendsRepository
-import com.prafullkumar.codeforcesly.login.OnboardingScreen
-import com.prafullkumar.codeforcesly.login.OnboardingViewModel
-import com.prafullkumar.codeforcesly.login.data.UserDatabase
-import com.prafullkumar.codeforcesly.login.data.UserRepository
-import com.prafullkumar.codeforcesly.problem.ProblemsScreen
-import com.prafullkumar.codeforcesly.problem.ProblemsViewModel
-import com.prafullkumar.codeforcesly.problem.data.ProblemsRepository
+import com.prafullkumar.codeforcesly.common.SharedPrefManager
+import com.prafullkumar.codeforcesly.contests.ui.ContestsScreen
+import com.prafullkumar.codeforcesly.friends.ui.FriendsScreen
+import com.prafullkumar.codeforcesly.login.ui.OnboardingScreen
+import com.prafullkumar.codeforcesly.problem.ui.ProblemsScreen
+import com.prafullkumar.codeforcesly.profile.ProfileScreen
+import com.prafullkumar.codeforcesly.visualizer.VisualizerScreen
 
 // Navigation.kt
 sealed class Screen(val route: String) {
@@ -52,6 +43,8 @@ sealed class Screen(val route: String) {
         data object Contests : Screen("contests")
         data object Friends : Screen("friends")
         data object Problems : Screen("problems")
+        data object Visualizer : Screen(route = "visualizer")
+        data object Submissions : Screen("submissions")
     }
 }
 
@@ -59,8 +52,11 @@ sealed class Screen(val route: String) {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    // Simulating auth state, replace with actual auth logic
-    var isAuthenticated by remember { mutableStateOf(false) }
+    val pref = LocalContext.current.getSharedPreferences(
+        SharedPrefManager.SHARED_PREF_NAME,
+        Context.MODE_PRIVATE
+    )
+    val isAuthenticated = pref.getBoolean(SharedPrefManager.LOGGED_IN, false)
 
     NavHost(
         modifier = Modifier
@@ -73,13 +69,9 @@ fun AppNavigation() {
         navigation(startDestination = Screen.Auth.Login.route, route = "auth") {
             composable(Screen.Auth.Login.route) {
                 OnboardingScreen(
-                    OnboardingViewModel(
-                        UserRepository(
-                            userDao = UserDatabase.getDatabase(LocalContext.current).userDao()
-                        )
-                    )
+                    viewModel = hiltViewModel()
                 ) {
-                    isAuthenticated = true
+                    pref.edit().putBoolean(SharedPrefManager.LOGGED_IN, true).apply()
                     navController.navigate("main") {
                         popUpTo("auth") { inclusive = true }
                     }
@@ -113,6 +105,12 @@ fun AppNavigation() {
                     startDestination = Screen.Main.Problems.route
                 )
             }
+            composable(Screen.Main.Visualizer.route) {
+                MainScreen(
+                    navController = navController,
+                    startDestination = Screen.Main.Visualizer.route
+                )
+            }
         }
     }
 }
@@ -123,14 +121,23 @@ fun MainScreen(navController: NavController, startDestination: String) {
     val context = LocalContext.current
     Scaffold(
         bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            ) {
+            NavigationBar {
                 NavigationBarItem(
                     icon = { Icon(Icons.Filled.Person, contentDescription = "Profile") },
                     label = { Text("Profile") },
                     selected = startDestination == Screen.Main.Profile.route,
                     onClick = { navController.navigate(Screen.Main.Profile.route) }
+                )
+                NavigationBarItem(
+                    icon = {
+                        Icon(
+                            ImageVector.vectorResource(R.drawable.baseline_timeline_24),
+                            contentDescription = "Profile"
+                        )
+                    },
+                    label = { Text("Visualizer") },
+                    selected = startDestination == Screen.Main.Visualizer.route,
+                    onClick = { navController.navigate(Screen.Main.Visualizer.route) }
                 )
                 NavigationBarItem(
                     icon = {
@@ -174,37 +181,21 @@ fun MainScreen(navController: NavController, startDestination: String) {
                 .padding(paddingValues), contentAlignment = Alignment.Center
         ) {
             when (startDestination) {
-                Screen.Main.Profile.route -> ProfileScreen()
-                Screen.Main.Contests.route -> ContestsScreen(ContestsViewModel())
+                Screen.Main.Profile.route -> ProfileScreen(onNavigateToSubmissions = {}) {
+
+                }
+
+                Screen.Main.Contests.route -> ContestsScreen(hiltViewModel())
                 Screen.Main.Friends.route -> FriendsScreen(
                     navController,
-                    FriendsViewModel(
-                        FriendsRepository(
-                            friendDao = FriendsDatabase.getDatabase(context).friendDao(),
-                        )
-                    )
+                    viewModel = hiltViewModel()
                 )
 
-                Screen.Main.Problems.route -> ProblemsScreen(
-                    ProblemsViewModel(
-                        ProblemsRepository(
-                            context
-                        )
-                    )
-                ) {
+                Screen.Main.Visualizer.route -> VisualizerScreen()
+                Screen.Main.Problems.route -> ProblemsScreen(viewModel = hiltViewModel()) {
 
                 }
             }
         }
-    }
-}
-
-@Composable
-fun ProfileScreen() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Profile Screen", style = MaterialTheme.typography.headlineMedium)
     }
 }

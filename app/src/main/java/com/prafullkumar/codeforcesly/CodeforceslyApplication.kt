@@ -1,6 +1,7 @@
 package com.prafullkumar.codeforcesly
 
 import android.app.Application
+import dagger.hilt.android.HiltAndroidApp
 
-class CodeforceslyApplication: Application() {
-}
+@HiltAndroidApp
+class CodeforceslyApplication : Application()
