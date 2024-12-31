@@ -1,4 +1,4 @@
-package com.prafullkumar.codeforcesly.profile
+package com.prafullkumar.codeforcesly.profile.profile
 
 import android.content.Context
 import androidx.lifecycle.ViewModel

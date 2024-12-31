@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Submission(
+data class SubmissionDto(
     @SerialName("author")
     val author: Author,
 

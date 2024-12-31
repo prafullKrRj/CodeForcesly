@@ -1,4 +1,4 @@
-package com.prafullkumar.codeforcesly.login.data
+package com.prafullkumar.codeforcesly.onBoarding.data
 
 import com.prafullkumar.codeforcesly.common.model.userinfo.UserInfoResponse
 import retrofit2.Response

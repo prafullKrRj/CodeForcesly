@@ -1,7 +1,6 @@
-package com.prafullkumar.codeforcesly.profile
+package com.prafullkumar.codeforcesly.profile.profile
 
 import android.content.Context
-import com.prafullkumar.codeforcesly.common.model.userinfo.UserInfo
 import com.prafullkumar.codeforcesly.common.model.userinfo.UserInfoResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

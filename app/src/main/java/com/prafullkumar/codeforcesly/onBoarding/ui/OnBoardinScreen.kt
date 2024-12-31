@@ -1,4 +1,4 @@
-package com.prafullkumar.codeforcesly.login.ui
+package com.prafullkumar.codeforcesly.onBoarding.ui
 
 // data/api/CodeforcesApi.kt
 import androidx.compose.foundation.background

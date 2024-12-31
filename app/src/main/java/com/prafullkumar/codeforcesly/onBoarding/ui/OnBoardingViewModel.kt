@@ -1,9 +1,9 @@
-package com.prafullkumar.codeforcesly.login.ui
+package com.prafullkumar.codeforcesly.onBoarding.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.prafullkumar.codeforcesly.login.data.local.UserEntity
-import com.prafullkumar.codeforcesly.login.domain.OnBoardingRepo
+import com.prafullkumar.codeforcesly.onBoarding.data.local.UserEntity
+import com.prafullkumar.codeforcesly.onBoarding.domain.OnBoardingRepo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +19,7 @@ sealed class OnboardingState {
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
-    private val repository: OnBoardingRepo
+    private val repository: OnBoardingRepo,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<OnboardingState>(OnboardingState.Initial)
     val uiState: StateFlow<OnboardingState> = _uiState
@@ -33,7 +33,9 @@ class OnboardingViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = OnboardingState.Loading
             repository.fetchAndStoreUser(handle)
-                .onSuccess { _uiState.value = OnboardingState.Success(it) }
+                .onSuccess {
+                    _uiState.value = OnboardingState.Success(it)
+                }
                 .onFailure { _uiState.value = OnboardingState.Error(it.message ?: "Unknown error") }
         }
     }

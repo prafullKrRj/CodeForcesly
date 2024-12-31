@@ -1,7 +1,7 @@
 package com.prafullkumar.codeforcesly.common.model.userinfo
 
 import com.google.gson.annotations.SerializedName
-import com.prafullkumar.codeforcesly.login.data.local.UserEntity
+import com.prafullkumar.codeforcesly.onBoarding.data.local.UserEntity
 import kotlinx.serialization.Serializable
 
 @Serializable

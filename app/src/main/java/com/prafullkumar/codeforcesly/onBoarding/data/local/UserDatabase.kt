@@ -1,4 +1,4 @@
-package com.prafullkumar.codeforcesly.login.data.local
+package com.prafullkumar.codeforcesly.onBoarding.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase

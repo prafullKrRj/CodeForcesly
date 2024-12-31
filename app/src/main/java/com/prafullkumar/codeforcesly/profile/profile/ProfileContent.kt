@@ -1,42 +1,27 @@
-package com.prafullkumar.codeforcesly.profile.profile4
+package com.prafullkumar.codeforcesly.profile.profile
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
-import androidx.compose.animation.with
+// ProfileContent.kt
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,62 +38,56 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
-fun ProfileScreen4(
+fun ProfileContent(
     userInfo: UserInfo,
-    onNavigateToSubmissions: () -> Unit,
-    onNavigateToVisualizer: () -> Unit
+    onNavigateToSubmissions: () -> Unit
 ) {
-    var selectedTab by remember { mutableStateOf(ProfileTabs.Profile) }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+    ) {
+        // Profile Header
+        ProfileHeader(userInfo)
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar {
-                ProfileTabs.entries.forEach { tab ->
-                    NavigationBarItem(
-                        selected = selectedTab == tab,
-                        onClick = { selectedTab = tab },
-                        icon = {
-                            Icon(
-                                imageVector = when (tab) {
-                                    ProfileTabs.Profile -> Icons.Default.Person
-                                    ProfileTabs.Submissions -> Icons.Default.List
-                                    ProfileTabs.Visualizer -> ImageVector.vectorResource(R.drawable.baseline_timeline_24)
-                                    ProfileTabs.Friends -> ImageVector.vectorResource(R.drawable.baseline_group_24)
-                                },
-                                contentDescription = tab.name
-                            )
-                        },
-                        label = { Text(tab.name) }
-                    )
-                }
-            }
-        }
-    ) { paddingValues ->
+        // Main Content
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.surface)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Profile Header
-            ProfileHeader(userInfo)
+            // Submissions Preview Card
+            SubmissionsPreviewCard(onViewAll = onNavigateToSubmissions)
 
-            // Content based on selected tab
-            AnimatedContent(
-                targetState = selectedTab,
-                transitionSpec = {
-                    (fadeIn() + slideInHorizontally()).togetherWith(fadeOut() + slideOutHorizontally())
-                }, label = ""
-            ) { tab ->
-                when (tab) {
-                    ProfileTabs.Profile -> ProfileContent(userInfo)
-                    ProfileTabs.Submissions -> SubmissionsContent()
-                    ProfileTabs.Visualizer -> VisualizerContent()
-                    ProfileTabs.Friends -> FriendsContent(userInfo.friendOfCount)
+            // Details Card
+            InfoCard(
+                title = "Details",
+                content = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        DetailRow("Organization", userInfo.organization ?: "-")
+                        DetailRow("Location", "${userInfo.city ?: ""}, ${userInfo.country ?: ""}")
+                        DetailRow("Contribution", "+${userInfo.contribution}")
+                        DetailRow(
+                            "Max Rating",
+                            "${userInfo.maxRating} (${userInfo.maxRank ?: "-"})"
+                        )
+                        DetailRow(
+                            "Registered",
+                            userInfo.registrationTimeSeconds.let {
+                                Instant.ofEpochSecond(it)
+                                    .atZone(ZoneId.systemDefault())
+                                    .format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                            } ?: "-"
+                        )
+                    }
                 }
-            }
+            )
+
+            // Stats Card
+            StatsCard(userInfo)
         }
     }
 }
@@ -167,34 +146,65 @@ fun ProfileHeader(userInfo: UserInfo) {
 }
 
 @Composable
-fun ProfileContent(userInfo: UserInfo) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+private fun SubmissionsPreviewCard(onViewAll: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        tonalElevation = 1.dp
     ) {
-        InfoCard(
-            title = "Details",
-            content = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    DetailRow("Organization", userInfo.organization ?: "-")
-                    DetailRow("Location", "${userInfo.city ?: ""}, ${userInfo.country ?: ""}")
-                    DetailRow("Contribution", "+${userInfo.contribution}")
-                    DetailRow("Max Rating", "${userInfo.maxRating} (${userInfo.maxRank ?: "-"})")
-                    DetailRow(
-                        "Registered",
-                        userInfo.registrationTimeSeconds?.let {
-                            Instant.ofEpochSecond(it)
-                                .atZone(ZoneId.systemDefault())
-                                .format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
-                        } ?: "-"
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Recent Submissions",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                TextButton(onClick = onViewAll) {
+                    Text("View All")
+                    Icon(
+                        ImageVector.vectorResource(R.drawable.baseline_chevron_right_24),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
-        )
 
-        StatsCard(userInfo)
+            // Preview of last 3 submissions
+            /* repeat(3) {
+                 SubmissionItem(
+                     problemName = "Problem ${it + 1}",
+                     verdict = "Accepted",
+                     timestamp = "2h ago",
+                     modifier = Modifier.padding(vertical = 4.dp)
+                 )
+             }*/
+        }
+    }
+}
+
+@Composable
+fun DetailRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 
@@ -219,25 +229,6 @@ private fun RankBadge(rank: String?, rating: Int) {
             color = backgroundColor,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
-fun DetailRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
         )
     }
 }
@@ -320,47 +311,6 @@ private fun StatItem(
             text = label,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-private enum class ProfileTabs {
-    Profile,
-    Submissions,
-    Visualizer,
-    Friends
-}
-
-// Placeholder content composables
-@Composable
-private fun SubmissionsContent() {
-    // TODO: Implement submissions list
-    Box(modifier = Modifier.fillMaxSize()) {
-        Text(
-            "Submissions Content",
-            modifier = Modifier.align(Alignment.Center)
-        )
-    }
-}
-
-@Composable
-private fun VisualizerContent() {
-    // TODO: Implement rating visualizer
-    Box(modifier = Modifier.fillMaxSize()) {
-        Text(
-            "Visualizer Content",
-            modifier = Modifier.align(Alignment.Center)
-        )
-    }
-}
-
-@Composable
-private fun FriendsContent(friendCount: Long) {
-    // TODO: Implement friends list
-    Box(modifier = Modifier.fillMaxSize()) {
-        Text(
-            "Friends ($friendCount)",
-            modifier = Modifier.align(Alignment.Center)
         )
     }
 }

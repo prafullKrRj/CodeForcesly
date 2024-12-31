@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UserStatus(
     @SerializedName("result")
-    val result: List<Submission>,
+    val result: List<SubmissionDto>,
     @SerializedName("status")
     val status: String
 )

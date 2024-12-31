@@ -27,9 +27,11 @@ import androidx.navigation.navigation
 import com.prafullkumar.codeforcesly.common.SharedPrefManager
 import com.prafullkumar.codeforcesly.contests.ui.ContestsScreen
 import com.prafullkumar.codeforcesly.friends.ui.FriendsScreen
-import com.prafullkumar.codeforcesly.login.ui.OnboardingScreen
+import com.prafullkumar.codeforcesly.onBoarding.ui.OnboardingScreen
 import com.prafullkumar.codeforcesly.problem.ui.ProblemsScreen
-import com.prafullkumar.codeforcesly.profile.ProfileScreen
+import com.prafullkumar.codeforcesly.profile.profile.ProfileScreen
+import com.prafullkumar.codeforcesly.profile.submissions.SubmissionsScreen
+import com.prafullkumar.codeforcesly.profile.submissions.SubmissionsViewModel
 import com.prafullkumar.codeforcesly.visualizer.VisualizerScreen
 
 // Navigation.kt
@@ -111,6 +113,11 @@ fun AppNavigation() {
                     startDestination = Screen.Main.Visualizer.route
                 )
             }
+            composable(Screen.Main.Submissions.route) {
+                SubmissionsScreen(hiltViewModel<SubmissionsViewModel>()) {
+                    navController.popBackStack()
+                }
+            }
         }
     }
 }
@@ -181,9 +188,9 @@ fun MainScreen(navController: NavController, startDestination: String) {
                 .padding(paddingValues), contentAlignment = Alignment.Center
         ) {
             when (startDestination) {
-                Screen.Main.Profile.route -> ProfileScreen(onNavigateToSubmissions = {}) {
-
-                }
+                Screen.Main.Profile.route -> ProfileScreen(onNavigateToSubmissions = {
+                    navController.navigate(Screen.Main.Submissions.route)
+                })
 
                 Screen.Main.Contests.route -> ContestsScreen(hiltViewModel())
                 Screen.Main.Friends.route -> FriendsScreen(

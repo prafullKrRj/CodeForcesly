@@ -1,4 +1,4 @@
-package com.prafullkumar.codeforcesly.profile
+package com.prafullkumar.codeforcesly.profile.profile
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,8 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.prafullkumar.codeforcesly.common.model.userinfo.UserInfo
 import com.prafullkumar.codeforcesly.common.model.userstatus.UserStatus
-import com.prafullkumar.codeforcesly.profile.profile4.ProfileScreen4
-import com.prafullkumar.codeforcesly.profile.profile5.ProfileScreen5
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -28,13 +26,12 @@ sealed class ProfileUiState {
     data class Error(val message: String) : ProfileUiState()
 }
 
-// ProfileScreen.kt
+// ProfileContent.kt
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
-    onNavigateToSubmissions: () -> Unit,
-    onNavigateToGraphs: () -> Unit
+    onNavigateToSubmissions: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -62,7 +59,7 @@ fun ProfileScreen(
                 }
 
                 is ProfileUiState.Success ->
-                    ProfileScreen5 (userInfo = state.user, onNavigateToSubmissions = {})
+                    ProfileContent(state.user, onNavigateToSubmissions = onNavigateToSubmissions)
             }
         }
     }
@@ -73,5 +70,9 @@ interface ProfileApiService {
     suspend fun getUserInfo(@Query("handles") handle: String): UserInfo
 
     @GET("user.status")
-    abstract fun getSubmissions(page: Int, loadSize: Int): UserStatus
+    suspend fun getUserSubmissions(
+        @Query("handle") handle: String,
+        @Query("from") from: Int,
+        @Query("count") count: Int
+    ): UserStatus
 }

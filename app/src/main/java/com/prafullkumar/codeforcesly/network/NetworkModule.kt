@@ -2,9 +2,9 @@ package com.prafullkumar.codeforcesly.network
 
 import com.prafullkumar.codeforcesly.contests.data.ContestsApiService
 import com.prafullkumar.codeforcesly.friends.data.FriendsApiService
-import com.prafullkumar.codeforcesly.login.data.OnBoardingApiService
+import com.prafullkumar.codeforcesly.onBoarding.data.OnBoardingApiService
 import com.prafullkumar.codeforcesly.problem.data.ProblemsApiService
-import com.prafullkumar.codeforcesly.profile.ProfileApiService
+import com.prafullkumar.codeforcesly.profile.profile.ProfileApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
