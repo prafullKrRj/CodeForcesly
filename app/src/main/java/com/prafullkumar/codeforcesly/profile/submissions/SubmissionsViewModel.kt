@@ -22,7 +22,11 @@ class SubmissionsViewModel @Inject constructor(
             prefetchDistance = 5,
             enablePlaceholders = false
         ),
-        pagingSourceFactory = { repository.getSubmissionsPagingSource(pref.getHandle() ?: "tourist") }
+        pagingSourceFactory = {
+            repository.getSubmissionsPagingSource(
+                pref.getHandle() ?: "tourist"
+            )
+        }
     ).flow.cachedIn(viewModelScope)
 
 }

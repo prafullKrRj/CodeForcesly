@@ -35,7 +35,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.prafullkumar.codeforcesly.MainScreens
 import com.prafullkumar.codeforcesly.friends.data.local.Friend
 
 
@@ -66,16 +66,12 @@ fun FriendsScreen(
 ) {
     val friends by viewModel.allFriends.collectAsState()
     val showDialog by viewModel.dialogState.collectAsState()
-    val isRefreshing by viewModel.isRefreshing.collectAsState()
+//    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("CodeForces Friends") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                ),
+                title = { Text("Friends") },
                 actions = {
                     IconButton(onClick = { viewModel.refreshFriends() }) {
                         Icon(
@@ -116,7 +112,7 @@ fun FriendsScreen(
                         friend = friend,
                         onDelete = { viewModel.deleteFriend(friend) },
                         onClick = {
-//                            navController.navigate("friend_detail/${friend.handle}")
+                            navController.navigate(MainScreens.FriendDetail(friend.handle))
                         }
                     )
                 }

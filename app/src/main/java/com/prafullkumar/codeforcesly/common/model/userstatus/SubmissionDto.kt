@@ -6,44 +6,44 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class SubmissionDto(
     @SerialName("author")
-    val author: Author,
+    val author: Author? = Author(),
 
-    @SerialName("contest_id")
-    val contestId: Int,
+    @SerialName("contestId")
+    val contestId: Int? = 0,
 
-    @SerialName("creation_time_seconds")
-    val creationTimeSeconds: Int,
+    @SerialName("creationTimeSeconds")
+    val creationTimeSeconds: Long? = 0,
 
     @SerialName("id")
-    val id: Int,
+    val id: Int? = 0,
 
-    @SerialName("memory_consumed_bytes")
-    val memoryConsumedBytes: Int,
+    @SerialName("memoryConsumedBytes")
+    val memoryConsumedBytes: Long? = 0,
 
-    @SerialName("passed_test_count")
-    val passedTestCount: Int,
+    @SerialName("passedTestCount")
+    val passedTestCount: Long? = 0,
 
     @SerialName("points")
-    val points: Double,
+    val points: Double? = 0.0,
 
-    @SerialName("points_info")
-    val pointsInfo: String,
+    @SerialName("pointsInfo")
+    val pointsInfo: String? = "",
 
     @SerialName("problem")
-    val problem: Problem,
+    val problem: Problem? = Problem(),
 
-    @SerialName("programming_language")
-    val programmingLanguage: String,
+    @SerialName("programmingLanguage")
+    val programmingLanguage: String? = null,
 
-    @SerialName("relative_time_seconds")
-    val relativeTimeSeconds: Int,
+    @SerialName("relativeTimeSeconds")
+    val relativeTimeSeconds: Long? = null,
 
     @SerialName("testset")
-    val testset: String,
+    val testset: String? = null,
 
-    @SerialName("time_consumed_millis")
-    val timeConsumedMillis: Int,
+    @SerialName("timeConsumedMillis")
+    val timeConsumedMillis: Long? = null,
 
     @SerialName("verdict")
-    val verdict: String
+    val verdict: String? = null
 )

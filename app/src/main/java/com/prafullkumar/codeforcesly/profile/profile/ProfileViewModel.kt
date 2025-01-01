@@ -12,8 +12,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val profileRepository: ProfileRepository,
-    @ApplicationContext private val context: Context
+    private val profileRepository: ProfileRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
@@ -22,9 +21,7 @@ class ProfileViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             try {
-                val handle = context.getSharedPreferences("codeforces_prefs", Context.MODE_PRIVATE)
-                    .getString("user_handle", "") ?: ""
-                val userInfo = profileRepository.getUserInfo(handle)
+                val userInfo = profileRepository.getUserInfo()
                 if (userInfo.status == "OK") {
                     _uiState.value = ProfileUiState.Success(userInfo.result[0])
                 } else {

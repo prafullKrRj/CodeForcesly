@@ -1,6 +1,7 @@
 package com.prafullkumar.codeforcesly
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -24,30 +25,55 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
+import androidx.navigation.toRoute
 import com.prafullkumar.codeforcesly.common.SharedPrefManager
 import com.prafullkumar.codeforcesly.contests.ui.ContestsScreen
 import com.prafullkumar.codeforcesly.friends.ui.FriendsScreen
+import com.prafullkumar.codeforcesly.friends.ui.friendDetailScren.FriendDetailScreen
 import com.prafullkumar.codeforcesly.onBoarding.ui.OnboardingScreen
 import com.prafullkumar.codeforcesly.problem.ui.ProblemsScreen
 import com.prafullkumar.codeforcesly.profile.profile.ProfileScreen
 import com.prafullkumar.codeforcesly.profile.submissions.SubmissionsScreen
 import com.prafullkumar.codeforcesly.profile.submissions.SubmissionsViewModel
-import com.prafullkumar.codeforcesly.visualizer.VisualizerScreen
+import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerScreen
+import kotlinx.serialization.Serializable
 
 // Navigation.kt
-sealed class Screen(val route: String) {
-    object Auth {
-        data object Login : Screen("login")
-    }
 
-    object Main {
-        data object Profile : Screen("profile")
-        data object Contests : Screen("contests")
-        data object Friends : Screen("friends")
-        data object Problems : Screen("problems")
-        data object Visualizer : Screen(route = "visualizer")
-        data object Submissions : Screen("submissions")
-    }
+sealed interface Screen {
+    @Serializable
+    data object Auth : Screen
+
+    @Serializable
+    data object Main : Screen
+}
+
+sealed interface AuthScreens : Screen {
+    @Serializable
+    data object Login : AuthScreens
+}
+
+sealed interface MainScreens : Screen {
+    @Serializable
+    data object Profile : MainScreens
+
+    @Serializable
+    data object Contests : MainScreens
+
+    @Serializable
+    data object Friends : MainScreens
+
+    @Serializable
+    data class FriendDetail(val handle: String) : MainScreens
+
+    @Serializable
+    data object Problems : MainScreens
+
+    @Serializable
+    data object Visualizer : MainScreens
+
+    @Serializable
+    data object Submissions : MainScreens
 }
 
 // AppNavigation.kt
@@ -65,11 +91,11 @@ fun AppNavigation() {
             .fillMaxSize()
             .systemBarsPadding(),
         navController = navController,
-        startDestination = if (isAuthenticated) "main" else "auth"
+        startDestination = if (isAuthenticated) Screen.Main else Screen.Auth
     ) {
         // Auth Navigation Graph
-        navigation(startDestination = Screen.Auth.Login.route, route = "auth") {
-            composable(Screen.Auth.Login.route) {
+        navigation<Screen.Auth>(startDestination = AuthScreens.Login) {
+            composable<AuthScreens.Login> {
                 OnboardingScreen(
                     viewModel = hiltViewModel()
                 ) {
@@ -82,41 +108,46 @@ fun AppNavigation() {
         }
 
         // Main Navigation Graph
-        navigation(startDestination = Screen.Main.Profile.route, route = "main") {
-            composable(Screen.Main.Profile.route) {
+        navigation<Screen.Main>(startDestination = MainScreens.Profile) {
+            composable<MainScreens.Profile> {
                 MainScreen(
                     navController = navController,
-                    startDestination = Screen.Main.Profile.route
+                    startDestination = MainScreens.Profile
                 )
             }
-            composable(Screen.Main.Contests.route) {
+            composable<MainScreens.Contests> {
                 MainScreen(
                     navController = navController,
-                    startDestination = Screen.Main.Contests.route
+                    startDestination = MainScreens.Contests
                 )
             }
-            composable(Screen.Main.Friends.route) {
+            composable<MainScreens.Friends> {
                 MainScreen(
                     navController = navController,
-                    startDestination = Screen.Main.Friends.route
+                    startDestination = MainScreens.Friends
                 )
             }
-            composable(Screen.Main.Problems.route) {
+            composable<MainScreens.Problems> {
                 MainScreen(
                     navController = navController,
-                    startDestination = Screen.Main.Problems.route
+                    startDestination = MainScreens.Problems
                 )
             }
-            composable(Screen.Main.Visualizer.route) {
+            composable<MainScreens.Visualizer> {
                 MainScreen(
                     navController = navController,
-                    startDestination = Screen.Main.Visualizer.route
+                    startDestination = MainScreens.Visualizer
                 )
             }
-            composable(Screen.Main.Submissions.route) {
+            composable<MainScreens.Submissions> {
                 SubmissionsScreen(hiltViewModel<SubmissionsViewModel>()) {
                     navController.popBackStack()
                 }
+            }
+            composable<MainScreens.FriendDetail> {
+                val handle = it.toRoute<MainScreens.FriendDetail>().handle
+                Log.d("AppNavigation", "FriendDetail: ${it.arguments?.getString("handle")}")
+                FriendDetailScreen(hiltViewModel())
             }
         }
     }
@@ -124,16 +155,15 @@ fun AppNavigation() {
 
 // MainScreen.kt
 @Composable
-fun MainScreen(navController: NavController, startDestination: String) {
-    val context = LocalContext.current
+fun MainScreen(navController: NavController, startDestination: Any) {
     Scaffold(
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
                     icon = { Icon(Icons.Filled.Person, contentDescription = "Profile") },
                     label = { Text("Profile") },
-                    selected = startDestination == Screen.Main.Profile.route,
-                    onClick = { navController.navigate(Screen.Main.Profile.route) }
+                    selected = startDestination == MainScreens.Profile,
+                    onClick = { navController.navigate(MainScreens.Profile) }
                 )
                 NavigationBarItem(
                     icon = {
@@ -143,8 +173,8 @@ fun MainScreen(navController: NavController, startDestination: String) {
                         )
                     },
                     label = { Text("Visualizer") },
-                    selected = startDestination == Screen.Main.Visualizer.route,
-                    onClick = { navController.navigate(Screen.Main.Visualizer.route) }
+                    selected = startDestination == MainScreens.Visualizer,
+                    onClick = { navController.navigate(MainScreens.Visualizer) }
                 )
                 NavigationBarItem(
                     icon = {
@@ -154,8 +184,8 @@ fun MainScreen(navController: NavController, startDestination: String) {
                         )
                     },
                     label = { Text("Contests") },
-                    selected = startDestination == Screen.Main.Contests.route,
-                    onClick = { navController.navigate(Screen.Main.Contests.route) }
+                    selected = startDestination == MainScreens.Contests,
+                    onClick = { navController.navigate(MainScreens.Contests) }
                 )
                 NavigationBarItem(
                     icon = {
@@ -165,8 +195,8 @@ fun MainScreen(navController: NavController, startDestination: String) {
                         )
                     },
                     label = { Text("Friends") },
-                    selected = startDestination == Screen.Main.Friends.route,
-                    onClick = { navController.navigate(Screen.Main.Friends.route) }
+                    selected = startDestination == MainScreens.Friends,
+                    onClick = { navController.navigate(MainScreens.Friends) }
                 )
                 NavigationBarItem(
                     icon = {
@@ -176,8 +206,8 @@ fun MainScreen(navController: NavController, startDestination: String) {
                         )
                     },
                     label = { Text("Problems") },
-                    selected = startDestination == Screen.Main.Problems.route,
-                    onClick = { navController.navigate(Screen.Main.Problems.route) }
+                    selected = startDestination == MainScreens.Problems,
+                    onClick = { navController.navigate(MainScreens.Problems) }
                 )
             }
         }
@@ -188,18 +218,18 @@ fun MainScreen(navController: NavController, startDestination: String) {
                 .padding(paddingValues), contentAlignment = Alignment.Center
         ) {
             when (startDestination) {
-                Screen.Main.Profile.route -> ProfileScreen(onNavigateToSubmissions = {
-                    navController.navigate(Screen.Main.Submissions.route)
+                MainScreens.Profile -> ProfileScreen(onNavigateToSubmissions = {
+                    navController.navigate(MainScreens.Submissions)
                 })
 
-                Screen.Main.Contests.route -> ContestsScreen(hiltViewModel())
-                Screen.Main.Friends.route -> FriendsScreen(
+                MainScreens.Contests -> ContestsScreen(hiltViewModel())
+                MainScreens.Friends -> FriendsScreen(
                     navController,
                     viewModel = hiltViewModel()
                 )
 
-                Screen.Main.Visualizer.route -> VisualizerScreen()
-                Screen.Main.Problems.route -> ProblemsScreen(viewModel = hiltViewModel()) {
+                MainScreens.Visualizer -> VisualizerScreen(hiltViewModel())
+                MainScreens.Problems -> ProblemsScreen(viewModel = hiltViewModel()) {
 
                 }
             }

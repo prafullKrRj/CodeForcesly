@@ -155,16 +155,18 @@ fun SubmissionCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = submission.problem.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = if (expanded) Int.MAX_VALUE else 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
+                submission.problem?.name?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = if (expanded) Int.MAX_VALUE else 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
 
-                RatingBadge(rating = submission.problem.rating)
+                submission.problem?.rating?.let { RatingBadge(rating = it) }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -181,7 +183,7 @@ fun SubmissionCard(
                 )
 
                 Text(
-                    text = formatTimeAgo(submission.creationTimeSeconds.toLong()),
+                    text = formatTimeAgo(submission.creationTimeSeconds?.toLong() ?: 0),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -190,7 +192,7 @@ fun SubmissionCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Verdict Status
-            VerdictChip(verdict = submission.verdict)
+            submission.verdict?.let { VerdictChip(verdict = it) }
 
             // Expanded Content
             AnimatedVisibility(
@@ -217,11 +219,13 @@ fun SubmissionCard(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = submission.programmingLanguage,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        submission.programmingLanguage?.let {
+                            Text(
+                                text = it,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
 
                     // Memory Usage
@@ -237,7 +241,7 @@ fun SubmissionCard(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = formatMemory(submission.memoryConsumedBytes.toLong()),
+                            text = formatMemory(submission.memoryConsumedBytes?.toLong() ?: 0),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -263,14 +267,14 @@ fun SubmissionCard(
                     }
 
                     // Problem Tags
-                    if (submission.problem.tags.isNotEmpty()) {
+                    if (submission.problem?.tags?.isNotEmpty() == true) {
                         Spacer(modifier = Modifier.height(12.dp))
                         FlowRow(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            submission.problem.tags.forEach { tag ->
+                            submission.problem?.tags?.forEach { tag ->
                                 TagChip(tag = tag)
                             }
                         }

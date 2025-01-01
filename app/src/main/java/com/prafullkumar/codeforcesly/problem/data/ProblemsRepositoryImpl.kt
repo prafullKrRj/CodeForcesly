@@ -11,7 +11,7 @@ import javax.inject.Inject
 class ProblemsRepositoryImpl @Inject constructor(
     private val context: Context,
     private val apiService: ProblemsApiService
-): ProblemsRepository {
+) : ProblemsRepository {
 
     override suspend fun getAllProblems() = getDummyData(context);
 

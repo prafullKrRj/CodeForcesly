@@ -19,8 +19,6 @@ fun UserEntity.toSafeUser(): UserEntity {
 }
 
 
-
-
 @Entity(tableName = "users")
 data class UserEntity(
     @PrimaryKey val handle: String,

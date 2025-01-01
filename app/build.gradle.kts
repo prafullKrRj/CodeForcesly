@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id ("com.google.dagger.hilt.android")
+    id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
     id("org.jetbrains.kotlin.plugin.serialization")
 }
@@ -90,6 +90,9 @@ dependencies {
     implementation(libs.androidx.room.ktx)
 //
 
-    implementation("androidx.paging:paging-compose:3.3.5")
+    implementation(libs.androidx.paging.compose)
     implementation(libs.accompanist.swiperefresh)
+
+    implementation(libs.compose.charts)
+    implementation(kotlin("reflect"))
 }

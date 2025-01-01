@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Member(
     @SerializedName("handle")
-    val handle: String
+    val handle: String? = ""
 )

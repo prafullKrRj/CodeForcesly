@@ -5,6 +5,7 @@ import com.prafullkumar.codeforcesly.friends.data.FriendsApiService
 import com.prafullkumar.codeforcesly.onBoarding.data.OnBoardingApiService
 import com.prafullkumar.codeforcesly.problem.data.ProblemsApiService
 import com.prafullkumar.codeforcesly.profile.profile.ProfileApiService
+import com.prafullkumar.codeforcesly.visualizer.data.VisualizerApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -25,30 +26,40 @@ class NetworkModule {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
+
     @Provides
     @Singleton
     fun providesContestsApiService(retrofit: Retrofit): ContestsApiService {
         return retrofit.create(ContestsApiService::class.java)
     }
+
     @Provides
     @Singleton
     fun providesFriendsApiService(retrofit: Retrofit): FriendsApiService {
         return retrofit.create(FriendsApiService::class.java)
     }
+
     @Provides
     @Singleton
     fun providesOnBoardingApiService(retrofit: Retrofit): OnBoardingApiService {
         return retrofit.create(OnBoardingApiService::class.java)
     }
+
     @Provides
     @Singleton
     fun providesProblemsApiService(retrofit: Retrofit): ProblemsApiService {
         return retrofit.create(ProblemsApiService::class.java)
     }
+
     @Provides
     @Singleton
     fun providesProfileApiService(retrofit: Retrofit): ProfileApiService {
         return retrofit.create(ProfileApiService::class.java)
     }
 
+    @Provides
+    @Singleton
+    fun providesVisualizerApiService(retrofit: Retrofit): VisualizerApiService {
+        return retrofit.create(VisualizerApiService::class.java)
+    }
 }

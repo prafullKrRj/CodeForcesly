@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.prafullkumar.codeforcesly.common.model.userinfo.UserInfo
+import com.prafullkumar.codeforcesly.common.model.userinfo.UserInfoResponse
 import com.prafullkumar.codeforcesly.common.model.userstatus.UserStatus
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -67,7 +68,7 @@ fun ProfileScreen(
 
 interface ProfileApiService {
     @GET("user.info")
-    suspend fun getUserInfo(@Query("handles") handle: String): UserInfo
+    suspend fun getUserInfo(@Query("handles") handle: String): UserInfoResponse
 
     @GET("user.status")
     suspend fun getUserSubmissions(

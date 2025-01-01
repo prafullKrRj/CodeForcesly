@@ -2,7 +2,6 @@ package com.prafullkumar.codeforcesly.problem.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.prafullkumar.codeforcesly.problem.data.ProblemsRepositoryImpl
 import com.prafullkumar.codeforcesly.problem.domain.ProblemsRepository
 import com.prafullkumar.codeforcesly.problem.domain.model.Problem
 import dagger.hilt.android.lifecycle.HiltViewModel

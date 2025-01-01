@@ -21,7 +21,10 @@ class SubmissionsPagingSource(
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, SubmissionDto> {
         return try {
             val page = params.key ?: 1
-            Log.d("SubmissionsPagingSource", "Requesting page: $page, loadSize: ${params.loadSize}, handle: $handle")
+            Log.d(
+                "SubmissionsPagingSource",
+                "Requesting page: $page, loadSize: ${params.loadSize}, handle: $handle"
+            )
             val response = api.getUserSubmissions(
                 handle = handle,
                 from = page,

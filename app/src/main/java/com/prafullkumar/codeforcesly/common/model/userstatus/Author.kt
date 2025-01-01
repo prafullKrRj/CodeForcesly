@@ -5,27 +5,27 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Author(
-    @SerialName("contest_id")
-    val contestId: Int,
+    @SerialName("contestId")
+    val contestId: Int? = 0,
 
     @SerialName("ghost")
-    val ghost: Boolean,
+    val ghost: Boolean? = false,
 
     @SerialName("members")
-    val members: List<Member>,
+    val members: List<Member>? = emptyList(),
 
-    @SerialName("participant_type")
-    val participantType: String,
+    @SerialName("participantType")
+    val participantType: String? = "",
 
     @SerialName("room")
-    val room: Int,
+    val room: Int? = 0,
 
-    @SerialName("start_time_seconds")
-    val startTimeSeconds: Int,
+    @SerialName("startTimeSeconds")
+    val startTimeSeconds: Int? = 0,
 
-    @SerialName("team_id")
-    val teamId: Int,
+    @SerialName("teamId")
+    val teamId: Int? = 0,
 
-    @SerialName("team_name")
-    val teamName: String
+    @SerialName("teamName")
+    val teamName: String? = ""
 )

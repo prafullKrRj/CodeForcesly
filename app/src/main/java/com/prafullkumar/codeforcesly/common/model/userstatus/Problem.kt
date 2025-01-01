@@ -1,28 +1,28 @@
 package com.prafullkumar.codeforcesly.common.model.userstatus
 
-import kotlinx.serialization.SerialName
+import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Problem(
-    @SerialName("contest_id")
-    val contestId: Int,
+    @SerializedName("contestId")
+    val contestId: Int? = 0,
 
-    @SerialName("index")
-    val index: String,
+    @SerializedName("index")
+    val index: String? = "",
 
-    @SerialName("name")
-    val name: String,
+    @SerializedName("name")
+    val name: String? = "",
 
-    @SerialName("points")
-    val points: Double,
+    @SerializedName("points")
+    val points: Double? = 0.0,
 
-    @SerialName("rating")
-    val rating: Int,
+    @SerializedName("rating")
+    val rating: Int? = 0,
 
-    @SerialName("tags")
-    val tags: List<String>,
+    @SerializedName("tags")
+    val tags: List<String>? = emptyList(),
 
-    @SerialName("type")
-    val type: String
+    @SerializedName("type")
+    val type: String? = ""
 )

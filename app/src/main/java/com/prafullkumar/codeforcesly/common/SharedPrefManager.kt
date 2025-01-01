@@ -11,15 +11,18 @@ class SharedPrefManager @Inject constructor(
         const val LOGGED_IN = "logged_in"
         const val HANDLE = ""
     }
+
     fun setHandle(value: String) {
         val editor = context.getSharedPreferences(SHARED_PREF_NAME, Context.MODE_PRIVATE).edit()
         editor.putString(HANDLE, value)
         editor.apply()
     }
+
     fun getHandle(): String? {
         val sharedPreferences = context.getSharedPreferences(SHARED_PREF_NAME, Context.MODE_PRIVATE)
         return sharedPreferences.getString(HANDLE, "")
     }
+
     fun setLoggedIn(value: Boolean) {
         val editor = context.getSharedPreferences(SHARED_PREF_NAME, Context.MODE_PRIVATE).edit()
         editor.putBoolean(LOGGED_IN, value)

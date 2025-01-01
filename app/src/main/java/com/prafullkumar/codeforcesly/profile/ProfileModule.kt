@@ -20,9 +20,10 @@ object ProfileModule {
     @Singleton
     fun provideCodeforcesRepository(
         api: ProfileApiService,
-        context: Application
+        context: Application,
+        prefManager: SharedPrefManager
     ): ProfileRepository {
-        return ProfileRepositoryImpl(context = context, api = api)
+        return ProfileRepositoryImpl(context = context, api = api, prefManager)
     }
 
     @Provides
