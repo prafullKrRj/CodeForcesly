@@ -55,6 +55,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.prafullkumar.codeforcesly.MainScreens
 import com.prafullkumar.codeforcesly.friends.data.local.Friend
+import java.util.Locale
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -204,7 +205,11 @@ fun FriendCard(
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
-                            text = friend.rank.capitalize(),
+                            text = friend.rank.replaceFirstChar {
+                                if (it.isLowerCase()) it.titlecase(
+                                    Locale.getDefault()
+                                ) else it.toString()
+                            },
                             style = MaterialTheme.typography.labelMedium,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             color = MaterialTheme.colorScheme.onPrimaryContainer

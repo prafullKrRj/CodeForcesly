@@ -32,7 +32,7 @@ class ProfileRepositoryImpl @Inject constructor(
         try {
             val data = loadJsonFromAssets(context, "user.json")
             print(data)
-            val response = Json.decodeFromString<UserInfoResponse>(data);
+            val response = Json.decodeFromString<UserInfoResponse>(data)
             return response
         } catch (e: Exception) {
             throw e

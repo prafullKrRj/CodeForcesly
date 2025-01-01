@@ -13,17 +13,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.prafullkumar.codeforcesly.common.model.userrating.Rating
-import com.prafullkumar.codeforcesly.common.model.userstatus.SubmissionDto
-import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerViewModel
+import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerData
 import kotlin.random.Random
 
 
 @Composable
 fun CodeforcesCharts(
-    submissions: List<SubmissionDto>,
-    ratings: List<Rating>,
-    viewModel: VisualizerViewModel
+    visualizerData: VisualizerData
 ) {
     LazyColumn(
         Modifier.fillMaxSize(),
@@ -32,27 +28,27 @@ fun CodeforcesCharts(
     ) {
         item("ratings") {
             GraphSection(title = "User Ratings") {
-                UserRatingGraph(ratings, viewModel = viewModel)
+                UserRatingGraph(visualizerData = visualizerData)
             }
         }
         item("tags") {
             GraphSection(title = "Tags Frequency") {
-                UserTagsDoughnutChart(viewModel = viewModel)
+                UserTagsDoughnutChart(visualizerData = visualizerData)
             }
         }
         item("verdicts") {
             GraphSection(title = "User Verdicts") {
-                UserVerdictsGraph(viewModel = viewModel)
+                UserVerdictsGraph(visualizerData = visualizerData)
             }
         }
         item("index") {
             GraphSection(title = "Questions Solved by Index") {
-                QuestionSolvedByIndexColumnChart(viewModel = viewModel)
+                QuestionSolvedByIndexColumnChart(visualizerData = visualizerData)
             }
         }
         item("languages") {
             GraphSection(title = "Languages Used") {
-                UserLanguagesGraph(viewModel = viewModel)
+                UserLanguagesGraph(visualizerData = visualizerData)
             }
         }
     }

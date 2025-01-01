@@ -15,7 +15,7 @@ class FriendsRepositoryImpl @Inject constructor(
 
     override suspend fun addFriend(handle: String, name: String) {
         try {
-            val response = api.getUserInfo(handle)
+            val response = api.getUsersInfo(handle)
             if (response.status == "OK" && response.result.isNotEmpty()) {
                 val userInfo = response.result[0]
                 val friend = Friend(
@@ -46,11 +46,11 @@ class FriendsRepositoryImpl @Inject constructor(
         try {
             val existingFriends = friendDao.getAllFriends().first()
             val updatedFriends = existingFriends.map { friend ->
-                val response = api.getUserInfo(friend.handle)
+                val response = api.getUsersInfo(friend.handle)
                 if (response.status == "OK" && response.result.isNotEmpty()) {
                     val userInfo = response.result[0]
                     friend.copy(
-                        rating = userInfo.rating ?: 0,
+                        rating = userInfo.rating,
                         rank = userInfo.rank ?: "unrated",
                         avatar = userInfo.titlePhoto,
                         lastActive = userInfo.lastOnlineTimeSeconds ?: 0

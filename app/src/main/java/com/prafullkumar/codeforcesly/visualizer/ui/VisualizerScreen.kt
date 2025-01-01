@@ -10,7 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.prafullkumar.codeforcesly.common.ErrorScreen
 import com.prafullkumar.codeforcesly.common.Resource
-import com.prafullkumar.codeforcesly.visualizer.domain.UserData
 import com.prafullkumar.codeforcesly.visualizer.ui.charts.CodeforcesCharts
 
 @Composable
@@ -27,9 +26,7 @@ fun VisualizerScreen(viewModel: VisualizerViewModel) {
 
             is Resource.Success -> {
                 CodeforcesCharts(
-                    submissions = (uiState as Resource.Success<UserData>).data.submissions,
-                    ratings = (uiState as Resource.Success<UserData>).data.ratings,
-                    viewModel
+                    viewModel.visualizerData
                 )
             }
 

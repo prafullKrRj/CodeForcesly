@@ -1,7 +1,6 @@
 package com.prafullkumar.codeforcesly
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -25,7 +24,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
-import androidx.navigation.toRoute
 import com.prafullkumar.codeforcesly.common.SharedPrefManager
 import com.prafullkumar.codeforcesly.contests.ui.ContestsScreen
 import com.prafullkumar.codeforcesly.friends.ui.FriendsScreen
@@ -145,9 +143,7 @@ fun AppNavigation() {
                 }
             }
             composable<MainScreens.FriendDetail> {
-                val handle = it.toRoute<MainScreens.FriendDetail>().handle
-                Log.d("AppNavigation", "FriendDetail: ${it.arguments?.getString("handle")}")
-                FriendDetailScreen(hiltViewModel())
+                FriendDetailScreen(hiltViewModel(), navController)
             }
         }
     }

@@ -254,7 +254,7 @@ fun TimeInfoRow(
 }
 
 fun getContestTypeColor(type: String): Color {
-    return when (type.toLowerCase(Locale.ROOT)) {
+    return when (type.lowercase(Locale.ROOT)) {
         "cf" -> Color(0xFF1976D2)      // Blue
         "ioi" -> Color(0xFF388E3C)     // Green
         "icpc" -> Color(0xFFF57C00)    // Orange

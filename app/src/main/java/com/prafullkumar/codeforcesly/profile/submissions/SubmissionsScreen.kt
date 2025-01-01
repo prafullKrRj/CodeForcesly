@@ -52,8 +52,10 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.prafullkumar.codeforcesly.R
+import com.prafullkumar.codeforcesly.common.ErrorScreen
 import com.prafullkumar.codeforcesly.common.model.userstatus.SubmissionDto
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,43 +78,50 @@ fun SubmissionsScreen(
             )
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(16.dp)
-        ) {
-            items(
-                count = submissionsState.itemCount,
-                key = { it }
-            ) { index ->
-                val submission = submissionsState[index]
-                submission?.let {
-                    SubmissionCard(submission = it)
+        SubmissionContent(submissionsState, padding)
+    }
+}
+
+@Composable
+private fun SubmissionContent(
+    submissionsState: LazyPagingItems<SubmissionDto>,
+    padding: PaddingValues
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(padding),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(16.dp)
+    ) {
+        items(
+            count = submissionsState.itemCount,
+            key = { it }
+        ) { index ->
+            val submission = submissionsState[index]
+            submission?.let {
+                SubmissionCard(submission = it)
+            }
+        }
+
+        when (submissionsState.loadState.append) {
+            is LoadState.Loading -> {
+                item {
+                    CircularProgressIndicator()
                 }
             }
 
-            when (submissionsState.loadState.append) {
-                is LoadState.Loading -> {
-                    item {
-                        CircularProgressIndicator()
-                    }
+            is LoadState.Error -> {
+                item {
+                    ErrorScreen(
+                        message = "An error occurred",
+                        onRetry = { submissionsState.retry() }
+                    )
                 }
+            }
 
-                is LoadState.Error -> {
-                    item {
-                        Text(
-                            text = "An error occurred",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
+            else -> {
 
-                else -> {
-
-                }
             }
         }
     }
@@ -274,7 +283,7 @@ fun SubmissionCard(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            submission.problem?.tags?.forEach { tag ->
+                            submission.problem.tags.forEach { tag ->
                                 TagChip(tag = tag)
                             }
                         }

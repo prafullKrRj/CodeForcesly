@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerViewModel
+import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerData
 import ir.ehsannarmani.compose_charts.PieChart
 import ir.ehsannarmani.compose_charts.models.Pie
 
@@ -30,9 +30,9 @@ import ir.ehsannarmani.compose_charts.models.Pie
 @Composable
 fun UserLanguagesGraph(
     modifier: Modifier = Modifier,
-    viewModel: VisualizerViewModel
+    visualizerData: VisualizerData
 ) {
-    var pieData = viewModel.languageFrequency.map { (language, frequency) ->
+    var pieData = visualizerData.languageFrequency.map { (language, frequency) ->
         Pie(
             label = language,
             data = frequency.first.toDouble(),
@@ -74,7 +74,7 @@ fun UserLanguagesGraph(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 maxItemsInEachRow = 4
             ) {
-                viewModel.languageFrequency.forEach { (language, frequency) ->
+                visualizerData.languageFrequency.forEach { (language, frequency) ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier

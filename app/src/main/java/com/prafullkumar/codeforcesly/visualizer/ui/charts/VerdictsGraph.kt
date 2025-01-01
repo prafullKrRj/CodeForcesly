@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerViewModel
+import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerData
 import ir.ehsannarmani.compose_charts.PieChart
 import ir.ehsannarmani.compose_charts.models.Pie
 
@@ -31,10 +31,10 @@ import ir.ehsannarmani.compose_charts.models.Pie
 @Composable
 fun UserVerdictsGraph(
     modifier: Modifier = Modifier,
-    viewModel: VisualizerViewModel
+    visualizerData: VisualizerData
 ) {
 
-    var pieData = viewModel.verdictFrequency.map { (verdict, frequencyColorPair) ->
+    var pieData = visualizerData.verdictFrequency.map { (verdict, frequencyColorPair) ->
         Pie(
             label = verdict,
             data = frequencyColorPair.first.toDouble(),
@@ -77,7 +77,7 @@ fun UserVerdictsGraph(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 maxItemsInEachRow = 4
             ) {
-                viewModel.verdictFrequency.forEach { (verdict, frequencyColorPair) ->
+                visualizerData.verdictFrequency.forEach { (verdict, frequencyColorPair) ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(vertical = 4.dp)

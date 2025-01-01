@@ -26,13 +26,13 @@ data class UserInfo(
     fun toUser(): UserEntity {
         return UserEntity(
             handle = handle,
-            rating = rating ?: 0,
+            rating = rating,
             rank = rank ?: "unrated",
-            maxRating = maxRating ?: 0,
+            maxRating = maxRating,
             maxRank = maxRank ?: "unrated",
-            contribution = contribution ?: 0,
-            avatar = avatar ?: "",
-            titlePhoto = titlePhoto ?: ""
+            contribution = contribution,
+            avatar = avatar,
+            titlePhoto = titlePhoto
         )
     }
 }

@@ -41,7 +41,8 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun ProfileContent(
     userInfo: UserInfo,
-    onNavigateToSubmissions: () -> Unit
+    showNavigateToSubmissions: Boolean = true,
+    onNavigateToSubmissions: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -60,7 +61,9 @@ fun ProfileContent(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Submissions Preview Card
-            SubmissionsPreviewCard(onViewAll = onNavigateToSubmissions)
+            if (showNavigateToSubmissions) {
+                SubmissionsPreviewCard(onNavigateToSubmissions)
+            }
 
             // Details Card
             InfoCard(

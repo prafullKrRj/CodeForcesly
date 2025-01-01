@@ -13,18 +13,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerViewModel
+import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerData
 import ir.ehsannarmani.compose_charts.ColumnChart
 import ir.ehsannarmani.compose_charts.models.BarProperties
 import ir.ehsannarmani.compose_charts.models.Bars
 
 @Composable
 fun QuestionSolvedByIndexColumnChart(
-    modifier: Modifier = Modifier, viewModel: VisualizerViewModel
+    modifier: Modifier = Modifier, visualizerData: VisualizerData
 ) {
-
-
-    val data = viewModel.indexCounts.map { (index, count) ->
+    val data = visualizerData.indexCounts.map { (index, count) ->
         Bars(
             label = index,
             values = listOf(

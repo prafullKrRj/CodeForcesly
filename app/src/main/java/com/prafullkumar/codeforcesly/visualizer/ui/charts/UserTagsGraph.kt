@@ -21,7 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerViewModel
+import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerData
 import ir.ehsannarmani.compose_charts.PieChart
 import ir.ehsannarmani.compose_charts.models.Pie
 
@@ -30,10 +30,10 @@ import ir.ehsannarmani.compose_charts.models.Pie
 @Composable
 fun UserTagsDoughnutChart(
     modifier: Modifier = Modifier,
-    viewModel: VisualizerViewModel
+    visualizerData: VisualizerData
 ) {
-    if (viewModel.tagsFrequency.isEmpty()) return
-    var doughnutData = viewModel.tagsFrequency.map { (tag, frequency) ->
+    if (visualizerData.tagsFrequency.isEmpty()) return
+    var doughnutData = visualizerData.tagsFrequency.map { (tag, frequency) ->
         Pie(
             label = tag,
             data = frequency.toDouble(),
@@ -76,7 +76,7 @@ fun UserTagsDoughnutChart(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 maxItemsInEachRow = 4
             ) {
-                viewModel.tagsFrequency.forEach { (tag, frequency) ->
+                visualizerData.tagsFrequency.forEach { (tag, frequency) ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(vertical = 4.dp)

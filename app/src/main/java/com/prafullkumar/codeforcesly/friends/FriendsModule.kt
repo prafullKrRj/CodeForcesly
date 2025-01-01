@@ -7,6 +7,8 @@ import com.prafullkumar.codeforcesly.friends.data.local.FriendDao
 import com.prafullkumar.codeforcesly.friends.data.local.FriendsDatabase
 import com.prafullkumar.codeforcesly.friends.data.repo.FriendsRepositoryImpl
 import com.prafullkumar.codeforcesly.friends.domain.FriendsRepository
+import com.prafullkumar.codeforcesly.friends.ui.friendDetailScren.FriendDetailRepository
+import com.prafullkumar.codeforcesly.friends.ui.friendDetailScren.FriendDetailRepositoryImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,7 +17,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-class FriendsModule {
+object FriendsModule {
 
     @Provides
     @Singleton
@@ -33,6 +35,12 @@ class FriendsModule {
         friendsDao: FriendDao,
         apiService: FriendsApiService
     ): FriendsRepository {
-        return FriendsRepositoryImpl(friendsDao, apiService);
+        return FriendsRepositoryImpl(friendsDao, apiService)
+    }
+
+    @Provides
+    @Singleton
+    fun providesFriendDetailRepository(apiService: FriendsApiService): FriendDetailRepository {
+        return FriendDetailRepositoryImpl(apiService)
     }
 }
