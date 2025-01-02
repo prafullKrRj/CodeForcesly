@@ -3,17 +3,23 @@ package com.prafullkumar.codeforcesly.profile.profile
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.prafullkumar.codeforcesly.common.ErrorScreen
 import com.prafullkumar.codeforcesly.common.model.userinfo.UserInfo
 import com.prafullkumar.codeforcesly.common.model.userinfo.UserInfoResponse
 import com.prafullkumar.codeforcesly.common.model.userstatus.UserStatus
@@ -27,40 +33,60 @@ sealed class ProfileUiState {
     data class Error(val message: String) : ProfileUiState()
 }
 
-// ProfileContent.kt
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    viewModel: ProfileViewModel = hiltViewModel(),
-    onNavigateToSubmissions: () -> Unit
+    viewModel: ProfileViewModel,
+    onNavigateToSubmissions: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val refreshState = rememberPullToRefreshState()
+    PullToRefreshBox(
+        isRefreshing = viewModel.isRefreshing,
+        onRefresh = viewModel::refreshState,
+        state = refreshState
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Profile") },
+                    actions = {
+                        IconButton(onClick = onNavigateToSettings) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Settings"
+                            )
+                        }
+                    }
+                )
+            },
+        ) { padding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+            ) {
+                when (val state = uiState) {
+                    is ProfileUiState.Loading -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Profile") },
-            )
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            when (val state = uiState) {
-                is ProfileUiState.Loading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+                    is ProfileUiState.Error -> {
+                        ErrorScreen(
+                            message = state.message,
+                            onRetry = viewModel::getUserInformation
+                        )
+                    }
+
+                    is ProfileUiState.Success ->
+                        ProfileContent(
+                            state.user,
+                            onNavigateToSubmissions = onNavigateToSubmissions
+                        )
                 }
-
-                is ProfileUiState.Error -> {
-                    Text("Error: ${state.message}")
-                }
-
-                is ProfileUiState.Success ->
-                    ProfileContent(state.user, onNavigateToSubmissions = onNavigateToSubmissions)
             }
         }
     }

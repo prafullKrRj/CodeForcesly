@@ -46,6 +46,7 @@ class VisualizerViewModel @Inject constructor(
     }
 
     fun getUserData() {
+        if (uiState.value is Resource.Success) return
         _uiState.update {
             Resource.Loading
         }

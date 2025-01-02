@@ -1,5 +1,8 @@
 package com.prafullkumar.codeforcesly.problem.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.prafullkumar.codeforcesly.problem.domain.ProblemsRepository
@@ -33,55 +36,77 @@ class ProblemsViewModel @Inject constructor(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ProblemsUiState())
     val uiState: StateFlow<ProblemsUiState> = _uiState.asStateFlow()
+    private var allProblems: List<Problem> = emptyList()
+
+    var isRefreshing by mutableStateOf(false)
 
     init {
-        if (_uiState.value.problems.isEmpty()) fetchProblems()
+        _uiState.update { it.copy(problems = allProblems) }
+        if (allProblems.isEmpty()) fetchProblems()
     }
 
     private fun fetchProblems() {
+        if (allProblems.isNotEmpty()) return
         viewModelScope.launch(Dispatchers.IO) {
-            _uiState.update { it.copy(isLoading = true) }
-            try {
-                val response = repository.getAllProblems()
-                if (response.status == "OK") {
-                    val problemList = response.result.problems
-                    _uiState.update {
-                        it.copy(
-                            problems = problemList,
-                            error = null
-                        )
-                    }
-                } else {
-                    _uiState.update {
-                        it.copy(
-                            problems = emptyList(),
-                            error = response.status
-                        )
-                    }
-                }
-            } catch (e: Exception) {
+            loadData()
+        }
+    }
+
+    private suspend fun loadData() {
+        _uiState.update { it.copy(isLoading = true) }
+        try {
+            val response = repository.getAllProblems()
+            if (response.status == "OK") {
+                val problemList = response.result.problems
+                allProblems = problemList
                 _uiState.update {
                     it.copy(
-                        isLoading = false,
-                        error = e.message
+                        problems = allProblems,
+                        error = null
                     )
                 }
-            } finally {
-                _uiState.update { it.copy(isLoading = false) }
+            } else {
+                _uiState.update {
+                    it.copy(
+                        problems = emptyList(),
+                        error = response.status
+                    )
+                }
             }
+        } catch (e: Exception) {
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    error = e.message
+                )
+            }
+        } finally {
+            _uiState.update { it.copy(isLoading = false) }
+        }
+    }
+
+    fun refreshState() {
+        viewModelScope.launch(Dispatchers.IO) {
+            isRefreshing = true
+            loadData()
+            applyFiltersAndSort()
+            isRefreshing = false
         }
     }
 
     fun updateSearchQuery(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
+        applyFiltersAndSort()
     }
 
     fun updateRatingRange(range: ClosedRange<Int>) {
         _uiState.update { it.copy(selectedRatingRange = range) }
+        applyFiltersAndSort()
     }
 
     fun updateSortOrder(order: SortOrder) {
         _uiState.update { it.copy(sortOrder = order) }
+        applyFiltersAndSort()
     }
 
     fun toggleTag(tag: String) {
@@ -93,6 +118,26 @@ class ProblemsViewModel @Inject constructor(
                 currentTags + tag
             }
             it.copy(selectedTags = newTags)
+        }
+        applyFiltersAndSort()
+    }
+
+    private fun applyFiltersAndSort() {
+        viewModelScope.launch(Dispatchers.Unconfined) {
+            val currentState = _uiState.value
+            val filteredProblems = allProblems
+                .filter { (it.rating?.toInt() ?: 0) in currentState.selectedRatingRange }
+                .filter { currentState.selectedTags.isEmpty() || currentState.selectedTags.all { tag -> tag in it.tags } }
+                .filter { it.name.contains(currentState.searchQuery, ignoreCase = true) }
+
+            val sortedProblems = when (currentState.sortOrder) {
+                SortOrder.RATING_ASC -> filteredProblems.sortedBy { it.rating }
+                SortOrder.RATING_DESC -> filteredProblems.sortedByDescending { it.rating }
+                SortOrder.NAME_ASC -> filteredProblems.sortedBy { it.name }
+                SortOrder.NAME_DESC -> filteredProblems.sortedByDescending { it.name }
+            }
+
+            _uiState.update { it.copy(problems = sortedProblems) }
         }
     }
 }

@@ -20,10 +20,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -35,6 +35,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -58,7 +60,6 @@ import com.prafullkumar.codeforcesly.friends.data.local.Friend
 import java.util.Locale
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FriendsScreen(
     navController: NavController,
@@ -67,66 +68,95 @@ fun FriendsScreen(
 ) {
     val friends by viewModel.allFriends.collectAsState()
     val showDialog by viewModel.dialogState.collectAsState()
-//    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    if (isRefreshing) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+    } else {
+        if (friends.isEmpty()) {
+            NoFriendsScreen(
+                onAddFriendsClick = { viewModel.showDialog() },
+                modifier = modifier
+            )
+        } else {
+            FriendsContent(
+                friends = friends,
+                navController = navController,
+                onAddFriendClick = { viewModel.showDialog() },
+                viewModel = viewModel,
+                isRefreshing = isRefreshing
+            )
+        }
+    }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Friends") },
-                actions = {
-                    IconButton(onClick = { viewModel.refreshFriends() }) {
-                        Icon(
-                            Icons.Filled.Refresh,
-                            contentDescription = "Refresh",
-                            tint = MaterialTheme.colorScheme.onPrimary
+    if (showDialog) {
+        AddFriendDialog(
+            onDismiss = { viewModel.hideDialog() },
+            onConfirm = { handle, name -> viewModel.addFriend(handle, name) }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FriendsContent(
+    friends: List<Friend>,
+    navController: NavController,
+    onAddFriendClick: () -> Unit,
+    viewModel: FriendsViewModel,
+    isRefreshing: Boolean
+) {
+    val pullRoRefreshState = rememberPullToRefreshState()
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        state = pullRoRefreshState,
+        onRefresh = {
+            viewModel.refreshFriends()
+        }
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Friends") },
+                )
+            },
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = onAddFriendClick,
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = "Add Friend")
+                }
+            }
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(friends) { friend ->
+                        FriendCard(
+                            friend = friend,
+                            onDelete = { viewModel.deleteFriend(friend) },
+                            onClick = {
+                                navController.navigate(MainScreens.FriendDetail(friend.handle))
+                            }
                         )
                     }
                 }
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { viewModel.showDialog() },
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = "Add Friend")
             }
         }
-    ) { paddingValues ->
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-//            SwipeRefresh(
-//                state = rememberSwipeRefreshState(isRefreshing),
-//                onRefresh = { viewModel.refreshFriends() }
-//            ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(friends) { friend ->
-                    FriendCard(
-                        friend = friend,
-                        onDelete = { viewModel.deleteFriend(friend) },
-                        onClick = {
-                            navController.navigate(MainScreens.FriendDetail(friend.handle))
-                        }
-                    )
-                }
-            }
-//            }
 
-            if (showDialog) {
-                AddFriendDialog(
-                    onDismiss = { viewModel.hideDialog() },
-                    onConfirm = { handle, name -> viewModel.addFriend(handle, name) }
-                )
-            }
-        }
     }
 }
 

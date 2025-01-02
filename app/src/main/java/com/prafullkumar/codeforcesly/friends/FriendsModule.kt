@@ -21,12 +21,18 @@ object FriendsModule {
 
     @Provides
     @Singleton
-    fun providesFriendsDao(context: Application): FriendDao {
+    fun providesFriendsDatabase(context: Application): FriendsDatabase {
         return Room.databaseBuilder(
             context = context,
             klass = FriendsDatabase::class.java,
             "friends_database"
-        ).build().friendDao()
+        ).build()
+    }
+
+    @Provides
+    @Singleton
+    fun providesFriendsDao(friendsDatabase: FriendsDatabase): FriendDao {
+        return friendsDatabase.friendDao()
     }
 
     @Provides

@@ -35,9 +35,14 @@ import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -54,53 +59,36 @@ fun ProblemsScreen(
     onProblemClick: (Problem) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Codeforces Problems") },
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            SearchBar(
-                query = uiState.searchQuery,
-                onQueryChange = viewModel::updateSearchQuery,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            )
-            FiltersRow(
-                selectedRatingRange = uiState.selectedRatingRange,
-                onRatingRangeChange = viewModel::updateRatingRange,
-                sortOrder = uiState.sortOrder,
-                onSortOrderChange = viewModel::updateSortOrder,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            )
-            TagsRow(
-                selectedTags = uiState.selectedTags,
-                onTagClick = viewModel::toggleTag,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            )
-
-            if (uiState.isLoading) {
-                LoadingIndicator()
-            } else if (uiState.error != null) {
-                ErrorMessage(error = uiState.error!!)
-            } else {
-                ProblemsList(
-                    problems = uiState.problems,
-                    onProblemClick = onProblemClick,
-                    modifier = Modifier.fillMaxSize()
+    val refreshState = rememberPullToRefreshState()
+    PullToRefreshBox(
+        state = refreshState,
+        onRefresh = viewModel::refreshState,
+        isRefreshing = viewModel.isRefreshing
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Codeforces Problems") },
                 )
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+            ) {
+                if (uiState.isLoading) {
+                    LoadingIndicator()
+                } else if (uiState.error != null) {
+                    ErrorMessage(error = uiState.error!!)
+                } else {
+                    ProblemsContent(
+                        problems = uiState.problems,
+                        onProblemClick = onProblemClick,
+                        modifier = Modifier.fillMaxSize(),
+                        viewModel
+                    )
+                }
             }
         }
     }
@@ -197,11 +185,36 @@ private fun TagsRow(
 }
 
 @Composable
-private fun ProblemsList(
+private fun ProblemsContent(
     problems: List<Problem>,
     onProblemClick: (Problem) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: ProblemsViewModel
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    SearchBar(
+        query = uiState.searchQuery,
+        onQueryChange = viewModel::updateSearchQuery,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    )
+    FiltersRow(
+        selectedRatingRange = uiState.selectedRatingRange,
+        onRatingRangeChange = viewModel::updateRatingRange,
+        sortOrder = uiState.sortOrder,
+        onSortOrderChange = viewModel::updateSortOrder,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    )
+    TagsRow(
+        selectedTags = uiState.selectedTags,
+        onTagClick = viewModel::toggleTag,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    )
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(16.dp),
@@ -226,8 +239,10 @@ private fun ProblemCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
+
     Card(
-        modifier = modifier.clickable(onClick = onClick),
+        modifier = modifier.clickable { isExpanded = !isExpanded },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
@@ -254,24 +269,26 @@ private fun ProblemCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                problem.tags.forEach { tag ->
-                    AssistChip(
-                        onClick = { },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                        ),
-                        label = {
-                            Text(
-                                text = tag,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    )
+            if (isExpanded) {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    problem.tags.forEach { tag ->
+                        AssistChip(
+                            onClick = { },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                            ),
+                            label = {
+                                Text(
+                                    text = tag,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        )
+                    }
                 }
             }
         }

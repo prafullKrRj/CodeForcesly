@@ -28,6 +28,7 @@ class ContestsViewModel @Inject constructor(
     }
 
     private fun fetchContests() {
+        if (_contests.value.isNotEmpty()) return
         viewModelScope.launch {
             _isLoading.value = true
             try {

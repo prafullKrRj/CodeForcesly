@@ -13,7 +13,7 @@ class ProblemsRepositoryImpl @Inject constructor(
     private val apiService: ProblemsApiService
 ) : ProblemsRepository {
 
-    override suspend fun getAllProblems() = getDummyData(context)
+    override suspend fun getAllProblems() = getFromApi()
 
     private suspend fun getFromApi(): ProblemResponse {
         return apiService.getProblems("https://codeforces.com/api/problemset.problems?tags=")

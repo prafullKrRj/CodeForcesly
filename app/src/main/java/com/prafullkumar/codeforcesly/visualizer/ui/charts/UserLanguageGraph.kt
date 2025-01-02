@@ -85,7 +85,7 @@ fun UserLanguagesGraph(
                                 )
                         )
                         Text(
-                            text = "$language: $frequency",
+                            text = "$language: ${frequency.first}",
                             modifier = Modifier.padding(start = 8.dp),
                             fontSize = 14.sp
                         )

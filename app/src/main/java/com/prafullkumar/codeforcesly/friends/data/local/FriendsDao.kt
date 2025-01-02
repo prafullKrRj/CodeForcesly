@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FriendDao {
-    @Query("SELECT * FROM friends ORDER BY added_at DESC")
+    @Query("SELECT * FROM friends ORDER BY rating DESC")
     fun getAllFriends(): Flow<List<Friend>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

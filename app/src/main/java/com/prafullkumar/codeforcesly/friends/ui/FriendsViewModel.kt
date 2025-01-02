@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -57,9 +58,13 @@ class FriendsViewModel @Inject constructor(
 
     fun refreshFriends() {
         viewModelScope.launch {
-            _isRefreshing.value = true
+            _isRefreshing.update {
+                true
+            }
             repository.refreshFriendsData()
-            _isRefreshing.value = false
+            _isRefreshing.update {
+                false
+            }
         }
     }
 }
