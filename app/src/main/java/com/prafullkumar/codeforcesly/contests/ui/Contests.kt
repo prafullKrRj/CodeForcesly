@@ -26,10 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,19 +45,19 @@ fun ContestsScreen(
 ) {
     val contests by viewModel.contests.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-    var pagerState = rememberPagerState {
-        3
-    }
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        pageCount = { ContestTab.entries.size }
+    )
+    val selectedTab = ContestTab.entries[pagerState.currentPage]
     val scope = rememberCoroutineScope()
-    var selectedTab by remember { mutableStateOf(ContestTab.UPCOMING) }
 
     Column(modifier = modifier.fillMaxSize()) {
         ContestTabs(
             selectedTab = selectedTab,
-            onTabSelected = {
-                selectedTab = it
+            onTabSelected = { tab ->
                 scope.launch {
-                    pagerState.animateScrollToPage(it.ordinal)
+                    pagerState.animateScrollToPage(tab.ordinal)
                 }
             }
         )
@@ -70,24 +67,21 @@ fun ContestsScreen(
                 .fillMaxSize()
                 .systemBarsPadding()
         ) {
-            when {
-                isLoading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-
-                else -> {
-                    HorizontalPager(state = pagerState) { page ->
-                        val filteredContests = when (page) {
-                            ContestTab.UPCOMING.ordinal -> contests.filter { it.phase == "BEFORE" }
-                            ContestTab.ONGOING.ordinal -> contests.filter { it.phase == "CODING" }
-                            ContestTab.PAST.ordinal -> contests.filter { it.phase == "FINISHED" }
-                            else -> emptyList()
-                        }
-                        selectedTab = ContestTab.entries.toTypedArray()[page]
-                        ContestList(contests = filteredContests)
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            } else {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize()
+                ) { page ->
+                    val filteredContests = when (ContestTab.entries[page]) {
+                        ContestTab.UPCOMING -> contests.filter { it.phase == "BEFORE" }
+                        ContestTab.ONGOING -> contests.filter { it.phase == "CODING" }
+                        ContestTab.PAST -> contests.filter { it.phase == "FINISHED" }
                     }
+                    ContestList(contests = filteredContests)
                 }
             }
         }
