@@ -10,9 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.AlertDialog
@@ -43,11 +46,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.prafullkumar.codeforcesly.MainScreens
+import com.prafullkumar.codeforcesly.common.openPrivacyPolicy
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,10 +64,12 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     navController: NavController
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     var showHandleDialog by remember { mutableStateOf(false) }
     var newHandle by rememberSaveable { mutableStateOf("") }
     var logoutAlertDialog by rememberSaveable { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
     LaunchedEffect(uiState.isLogoutSuccess) {
         if (uiState.isLogoutSuccess) {
             onLogoutSuccess()
@@ -96,7 +103,9 @@ fun SettingsScreen(
                 .padding(16.dp)
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -162,6 +171,17 @@ fun SettingsScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Logout")
+                }
+                FilledTonalButton(onClick = {
+                    context.openPrivacyPolicy()
+                }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                        contentDescription = "Change Handle",
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Privacy Policy")
                 }
             }
 

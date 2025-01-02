@@ -26,6 +26,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
+import androidx.navigation.toRoute
 import com.prafullkumar.codeforcesly.common.SharedPrefManager
 import com.prafullkumar.codeforcesly.contests.ui.ContestsScreen
 import com.prafullkumar.codeforcesly.contests.ui.ContestsViewModel
@@ -42,6 +43,7 @@ import com.prafullkumar.codeforcesly.profile.submissions.SubmissionsViewModel
 import com.prafullkumar.codeforcesly.settings.SettingsScreen
 import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerScreen
 import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerViewModel
+import com.prafullkumar.codeforcesly.webview.WebViewScreen
 import kotlinx.serialization.Serializable
 
 // Navigation.kt
@@ -83,6 +85,9 @@ sealed interface MainScreens : Screen {
 
     @Serializable
     data object Settings : MainScreens
+
+    @Serializable
+    data class WebView(val url: String, val title: String) : MainScreens
 }
 
 // AppNavigation.kt
@@ -118,7 +123,6 @@ fun AppNavigation() {
             }
         }
 
-        // Main Navigation Graph
         navigation<Screen.Main>(startDestination = MainScreens.Profile) {
             composable<MainScreens.Profile> {
                 MainScreen(
@@ -175,19 +179,22 @@ fun AppNavigation() {
                     }
                 }, navController = navController, onChangeHandleSuccess = {
                     viewModels.remove(MainScreens.Profile)
+                })
+            }
+            composable<MainScreens.WebView> {
+                val url = it.toRoute<MainScreens.WebView>()
+                WebViewScreen(url = url.url, title = url.title) {
+                    navController.popBackStack()
                 }
-                )
             }
         }
     }
 }
 
-// MainScreen.kt
 @Composable
 fun MainScreen(
     navController: NavController, startDestination: Any, viewModels: MutableMap<Any, ViewModel>
 ) {
-
     Scaffold(bottomBar = {
         NavigationBar {
             NavigationBarItem(icon = {
@@ -281,7 +288,12 @@ fun MainScreen(
                         hiltViewModel<ProblemsViewModel>()
                     } as ProblemsViewModel
                     ProblemsScreen(viewModel = viewModel) {
-
+                        navController.navigate(
+                            MainScreens.WebView(
+                                url = "https://codeforces.com/problemset/problem/${it.contestId}/${it.index}",
+                                title = it.name
+                            )
+                        )
                     }
                 }
             }

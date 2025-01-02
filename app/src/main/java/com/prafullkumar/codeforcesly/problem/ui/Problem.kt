@@ -242,12 +242,13 @@ private fun ProblemCard(
     var isExpanded by remember { mutableStateOf(false) }
 
     Card(
-        modifier = modifier.clickable { isExpanded = !isExpanded },
+        modifier = modifier,
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .clickable(onClick = onClick)
                 .padding(16.dp)
         ) {
             Row(
@@ -255,15 +256,33 @@ private fun ProblemCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
+                    modifier = Modifier.weight(.8f),
                     text = "${problem.index}. ${problem.name}",
                     style = MaterialTheme.typography.headlineSmall
                 )
-                problem.rating?.let {
-                    Text(
-                        text = it.toString(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = getRatingColor(it)
-                    )
+                Row(
+                    Modifier.weight(.2f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    problem.rating?.let {
+                        Text(
+                            text = it.toString(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = getRatingColor(it)
+                        )
+                    }
+                    IconButton(
+                        modifier = Modifier.weight(1f),
+                        onClick = { isExpanded = !isExpanded }) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(
+                                if (isExpanded) R.drawable.baseline_keyboard_arrow_up_24
+                                else R.drawable.baseline_keyboard_arrow_down_24
+                            ),
+                            contentDescription = "Expand"
+                        )
+                    }
                 }
             }
 
@@ -291,6 +310,7 @@ private fun ProblemCard(
                     }
                 }
             }
+
         }
     }
 }
