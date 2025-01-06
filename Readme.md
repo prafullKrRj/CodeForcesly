@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/d014a557-de8b-4a6b-85f6-f77496d6913e)# 🎯 CodeForcesly - CF Helper
+# 🎯 CodeForcesly - CF Helper
 > **Your Complete Codeforces Companion: Visualize, Track, and Enhance Your Competitive Programming Journey**
 > View Complete application here: [Codeforcesly](https://prafullkumar.com/apps/codeforcesly/)
 Welcome to **CodeForcesly**, a modern Android application built with Jetpack Compose that brings Codeforces to your fingertips. This comprehensive tool helps competitive programmers track their progress, analyze their performance, and stay connected with the Codeforces community.
