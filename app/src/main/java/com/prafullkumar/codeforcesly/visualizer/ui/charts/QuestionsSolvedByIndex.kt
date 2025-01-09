@@ -34,6 +34,9 @@ fun QuestionSolvedByIndexColumnChart(
             ),
         )
     }
+    val maxValue = data.maxOf { it.values[0].value }
+    val chartHeight = maxValue * 10 // Adjust multiplier as needed for better scaling
+
     Row(
         Modifier
             .fillMaxWidth()
@@ -43,9 +46,8 @@ fun QuestionSolvedByIndexColumnChart(
         ColumnChart(
             modifier = modifier
                 .padding(horizontal = 22.dp)
-//                .fillMaxWidth()
                 .width((data.size * 50).dp)
-                .height(data.maxOf { it.values[0].value / 2 }.dp),
+                .height(chartHeight.dp),
             data = data,
             barProperties = BarProperties(
                 spacing = 3.dp, thickness = 20.dp
