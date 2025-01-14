@@ -9,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,6 +24,10 @@ class ProfileViewModel @Inject constructor(
     var isRefreshing by mutableStateOf(false)
 
     private var hasLoaded = false
+
+    fun clearData() {
+        _uiState.update { ProfileUiState.Loading }
+    }
 
     init {
         if (!hasLoaded) {

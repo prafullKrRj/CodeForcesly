@@ -1,5 +1,6 @@
 package com.prafullkumar.codeforcesly.contests.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,16 +33,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.prafullkumar.codeforcesly.contests.domain.Contest
+import androidx.navigation.NavController
+import com.prafullkumar.codeforcesly.MainScreens
+import com.prafullkumar.codeforcesly.contests.domain.models.contest.Contest
 import kotlinx.coroutines.launch
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.abs
 
 @Composable
 fun ContestsScreen(
     viewModel: ContestsViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    navController: NavController
 ) {
     val contests by viewModel.contests.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -81,7 +88,7 @@ fun ContestsScreen(
                         ContestTab.ONGOING -> contests.filter { it.phase == "CODING" }
                         ContestTab.PAST -> contests.filter { it.phase == "FINISHED" }
                     }
-                    ContestList(contests = filteredContests)
+                    ContestList(contests = filteredContests, navController = navController)
                 }
             }
         }
@@ -118,20 +125,25 @@ fun ContestTabs(
 }
 
 @Composable
-fun ContestList(contests: List<Contest>) {
+fun ContestList(contests: List<Contest>, navController: NavController) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(contests) { contest ->
-            ContestCard(contest = contest)
+            ContestCard(contest = contest, navController = navController)
+        }
+        if (contests.isEmpty()) {
+            item {
+                Text("No Contests")
+            }
         }
     }
 }
 
 @Composable
-fun ContestCard(contest: Contest) {
+fun ContestCard(contest: Contest, navController: NavController) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
@@ -140,6 +152,9 @@ fun ContestCard(contest: Contest) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .clickable(enabled = contest.phase.lowercase() == "finished", onClick = {
+                    navController.navigate(MainScreens.ContestDetailScreen(contest.id))
+                })
                 .padding(16.dp)
         ) {
             // Contest Name
@@ -160,10 +175,10 @@ fun ContestCard(contest: Contest) {
                     text = contest.type,
                     color = getContestTypeColor(contest.type)
                 )
-                Text(
-                    text = "${contest.participants} participants",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+//                Text(
+//                    text = "${contest.participants} participants",
+//                    style = MaterialTheme.typography.bodyMedium
+//                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -205,7 +220,7 @@ fun ContestTimeInfo(contest: Contest) {
                 val timeUntilStart = Duration.ofSeconds(contest.startTimeSeconds - now)
                 TimeInfoRow(
                     label = "Starts in",
-                    value = timeUntilStart.toString()// formatDuration(timeUntilStart)
+                    value = formatDuration(timeUntilStart)
                 )
             }
 
@@ -215,23 +230,45 @@ fun ContestTimeInfo(contest: Contest) {
                 )
                 TimeInfoRow(
                     label = "Time left",
-                    value = timeLeft.toString() // formatDuration(timeLeft)
+                    value = formatDuration(timeLeft)
                 )
             }
 
             else -> {
                 TimeInfoRow(
                     label = "Duration",
-                    value = duration.toString() // formatDuration(duration)
+                    value = formatDuration(duration)
                 )
             }
         }
 
         TimeInfoRow(
             label = "Start time",
-            value = startTime.toString() // formatDateTime(startTime)
+            value = formatDateTime(startTime)
         )
     }
+}
+
+fun formatDateTime(instant: Instant): String {
+    val formatter = DateTimeFormatter
+        .ofPattern("MMM dd, yyyy HH:mm")
+        .withZone(ZoneId.systemDefault())
+    return formatter.format(instant)
+}
+
+fun formatDuration(duration: Duration): String {
+    val seconds = abs(duration.seconds)
+    val days = seconds / (24 * 3600)
+    val hours = (seconds % (24 * 3600)) / 3600
+    val minutes = (seconds % 3600) / 60
+    val remainingSeconds = seconds % 60
+
+    return buildString {
+        if (days > 0) append("${days}d ")
+        if (hours > 0 || days > 0) append("${hours}h ")
+        if (minutes > 0 || hours > 0 || days > 0) append("${minutes}m ")
+        append("${remainingSeconds}s")
+    }.trim()
 }
 
 @Composable
@@ -278,8 +315,3 @@ fun getContestTypeColor(type: String): Color {
 //        else -> "${minutes}m"
 //    }
 //}
-
-fun formatDateTime(instant: Instant): String {
-    // Implement date time formatting
-    return instant.toString()
-}

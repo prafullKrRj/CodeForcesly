@@ -5,7 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 
-const val PRIVACY_POLICY_URL = "https://prafullkumar.com/codeforcesly/privacyPolicy"
+const val PRIVACY_POLICY_URL = "https://prafullkumar.com/apps/codeforcesly/privacyPolicy"
 fun Context.openPrivacyPolicy() {
     try {
         val intent = Intent(Intent.ACTION_VIEW).apply {

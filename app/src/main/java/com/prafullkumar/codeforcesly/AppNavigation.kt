@@ -28,12 +28,14 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
 import com.prafullkumar.codeforcesly.common.SharedPrefManager
+import com.prafullkumar.codeforcesly.contests.ui.ContestQuestions
 import com.prafullkumar.codeforcesly.contests.ui.ContestsScreen
 import com.prafullkumar.codeforcesly.contests.ui.ContestsViewModel
 import com.prafullkumar.codeforcesly.friends.ui.FriendsScreen
 import com.prafullkumar.codeforcesly.friends.ui.FriendsViewModel
 import com.prafullkumar.codeforcesly.friends.ui.friendDetailScren.FriendDetailScreen
 import com.prafullkumar.codeforcesly.onBoarding.ui.OnboardingScreen
+import com.prafullkumar.codeforcesly.problem.domain.model.Problem
 import com.prafullkumar.codeforcesly.problem.ui.ProblemsScreen
 import com.prafullkumar.codeforcesly.problem.ui.ProblemsViewModel
 import com.prafullkumar.codeforcesly.profile.profile.ProfileScreen
@@ -67,6 +69,9 @@ sealed interface MainScreens : Screen {
 
     @Serializable
     data object Contests : MainScreens
+
+    @Serializable
+    data class ContestDetailScreen(val contestId: Int) : MainScreens
 
     @Serializable
     data object Friends : MainScreens
@@ -139,6 +144,9 @@ fun AppNavigation() {
                     viewModels = viewModels
                 )
             }
+            composable<MainScreens.ContestDetailScreen> {
+                ContestQuestions(navController = navController)
+            }
             composable<MainScreens.Friends> {
                 MainScreen(
                     navController = navController,
@@ -178,6 +186,9 @@ fun AppNavigation() {
                         popUpTo(Screen.Auth) { inclusive = true }
                     }
                 }, navController = navController, onChangeHandleSuccess = {
+                    val profileViewModel: ProfileViewModel =
+                        viewModels[MainScreens.Profile] as ProfileViewModel
+                    profileViewModel.clearData()
                     viewModels.remove(MainScreens.Profile)
                 })
             }
@@ -187,6 +198,7 @@ fun AppNavigation() {
                     navController.popBackStack()
                 }
             }
+
         }
     }
 }
@@ -264,7 +276,7 @@ fun MainScreen(
                     val viewModel = viewModels.getOrPut(MainScreens.Contests) {
                         hiltViewModel<ContestsViewModel>()
                     } as ContestsViewModel
-                    ContestsScreen(viewModel)
+                    ContestsScreen(viewModel, navController = navController)
                 }
 
                 MainScreens.Friends -> {
@@ -288,15 +300,19 @@ fun MainScreen(
                         hiltViewModel<ProblemsViewModel>()
                     } as ProblemsViewModel
                     ProblemsScreen(viewModel = viewModel) {
-                        navController.navigate(
-                            MainScreens.WebView(
-                                url = "https://codeforces.com/problemset/problem/${it.contestId}/${it.index}",
-                                title = it.name
-                            )
-                        )
+                        navController.navigateToProblemWebView(it)
                     }
                 }
             }
         }
     }
+}
+
+fun NavController.navigateToProblemWebView(problem: Problem) {
+    this.navigate(
+        MainScreens.WebView(
+            "https://codeforces.com/problemset/problem/${problem.contestId}/${problem.index}",
+            problem.index
+        )
+    )
 }

@@ -234,7 +234,7 @@ private fun ProblemsContent(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ProblemCard(
+fun ProblemCard(
     problem: Problem,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -258,7 +258,7 @@ private fun ProblemCard(
                 Text(
                     modifier = Modifier.weight(.8f),
                     text = "${problem.index}. ${problem.name}",
-                    style = MaterialTheme.typography.headlineSmall
+                    style = MaterialTheme.typography.titleMedium
                 )
                 Row(
                     Modifier.weight(.2f),

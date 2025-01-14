@@ -1,4 +1,4 @@
-package com.prafullkumar.codeforcesly.contests.domain
+package com.prafullkumar.codeforcesly.contests.domain.models.contest
 
 import com.google.gson.annotations.SerializedName
 

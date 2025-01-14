@@ -1,5 +1,6 @@
 package com.prafullkumar.codeforcesly.visualizer.ui.charts
 
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -17,6 +18,7 @@ import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerData
 import ir.ehsannarmani.compose_charts.ColumnChart
 import ir.ehsannarmani.compose_charts.models.BarProperties
 import ir.ehsannarmani.compose_charts.models.Bars
+import ir.ehsannarmani.compose_charts.models.DrawStyle
 
 @Composable
 fun QuestionSolvedByIndexColumnChart(
@@ -27,15 +29,13 @@ fun QuestionSolvedByIndexColumnChart(
             label = index,
             values = listOf(
                 Bars.Data(
-                    label = "Indexes",
+                    label = "Questions Solved",
                     value = count.toDouble(),
                     color = Brush.radialGradient(listOf(Color(0xFF23af92), Color(0xFF2BC0A1)))
                 )
             ),
         )
     }
-    val maxValue = data.maxOf { it.values[0].value }
-    val chartHeight = maxValue * 10 // Adjust multiplier as needed for better scaling
 
     Row(
         Modifier
@@ -47,11 +47,13 @@ fun QuestionSolvedByIndexColumnChart(
             modifier = modifier
                 .padding(horizontal = 22.dp)
                 .width((data.size * 50).dp)
-                .height(chartHeight.dp),
+                .height(300.dp),
             data = data,
             barProperties = BarProperties(
-                spacing = 3.dp, thickness = 20.dp
+                spacing = 3.dp, thickness = 20.dp, style = DrawStyle.Fill
+            ),
+            animationSpec = tween(250),
+
             )
-        )
     }
 }
