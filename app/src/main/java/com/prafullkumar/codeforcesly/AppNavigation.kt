@@ -172,9 +172,7 @@ fun AppNavigation() {
                 val viewModel = viewModels.getOrPut(MainScreens.Submissions) {
                     hiltViewModel<SubmissionsViewModel>()
                 } as SubmissionsViewModel
-                SubmissionsScreen(viewModel) {
-                    navController.popBackStack()
-                }
+                SubmissionsScreen(viewModel, navController)
             }
             composable<MainScreens.FriendDetail> {
                 FriendDetailScreen(hiltViewModel(), navController)

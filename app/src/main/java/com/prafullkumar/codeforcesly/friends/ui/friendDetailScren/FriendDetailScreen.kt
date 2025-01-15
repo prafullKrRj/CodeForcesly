@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.prafullkumar.codeforcesly.MainScreens
 import com.prafullkumar.codeforcesly.common.ErrorScreen
 import com.prafullkumar.codeforcesly.profile.profile.ProfileContent
 import com.prafullkumar.codeforcesly.profile.submissions.SubmissionCard
@@ -83,7 +84,7 @@ fun FriendDetailScreen(viewModel: FriendDetailViewModel, navController: NavContr
                 }
                 when (tabs[page]) {
                     Tabs.PROFILE -> FriendInfoScreen(viewModel)
-                    Tabs.SUBMISSIONS -> SubmissionsContent(viewModel)
+                    Tabs.SUBMISSIONS -> SubmissionsContent(viewModel, navController)
                     Tabs.VISUALIZER -> VisualizerContent(viewModel)
                 }
             }
@@ -116,7 +117,7 @@ fun VisualizerContent(viewModel: FriendDetailViewModel) {
 }
 
 @Composable
-private fun SubmissionsContent(viewModel: FriendDetailViewModel) {
+private fun SubmissionsContent(viewModel: FriendDetailViewModel, navController: NavController) {
     val submissionsState by viewModel.submissions.collectAsState()
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when (val state = submissionsState) {
@@ -135,7 +136,14 @@ private fun SubmissionsContent(viewModel: FriendDetailViewModel) {
                     contentPadding = PaddingValues(16.dp)
                 ) {
                     items(state.data) { submission ->
-                        SubmissionCard(submission)
+                        SubmissionCard(submission, toSubmission = {
+                            navController.navigate(
+                                MainScreens.WebView(
+                                    url = "https://codeforces.com/contest/${submission.contestId}/submission/${submission.id}",
+                                    title = "Submission",
+                                )
+                            )
+                        })
                     }
                 }
             }

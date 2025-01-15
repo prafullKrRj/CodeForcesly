@@ -19,11 +19,14 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -44,12 +47,14 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.abs
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContestsScreen(
     viewModel: ContestsViewModel,
     modifier: Modifier = Modifier,
     navController: NavController
 ) {
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     val contests by viewModel.contests.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val pagerState = rememberPagerState(
@@ -58,37 +63,42 @@ fun ContestsScreen(
     )
     val selectedTab = ContestTab.entries[pagerState.currentPage]
     val scope = rememberCoroutineScope()
-
-    Column(modifier = modifier.fillMaxSize()) {
-        ContestTabs(
-            selectedTab = selectedTab,
-            onTabSelected = { tab ->
-                scope.launch {
-                    pagerState.animateScrollToPage(tab.ordinal)
-                }
-            }
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .systemBarsPadding()
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            } else {
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxSize()
-                ) { page ->
-                    val filteredContests = when (ContestTab.entries[page]) {
-                        ContestTab.UPCOMING -> contests.filter { it.phase == "BEFORE" }
-                        ContestTab.ONGOING -> contests.filter { it.phase == "CODING" }
-                        ContestTab.PAST -> contests.filter { it.phase == "FINISHED" }
+    val refreshState = rememberPullToRefreshState()
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = viewModel::refresh,
+        state = refreshState
+    ) {
+        Column(modifier = modifier.fillMaxSize()) {
+            ContestTabs(
+                selectedTab = selectedTab,
+                onTabSelected = { tab ->
+                    scope.launch {
+                        pagerState.animateScrollToPage(tab.ordinal)
                     }
-                    ContestList(contests = filteredContests, navController = navController)
+                }
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .systemBarsPadding()
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                } else {
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize()
+                    ) { page ->
+                        val filteredContests = when (ContestTab.entries[page]) {
+                            ContestTab.UPCOMING -> contests.filter { it.phase == "BEFORE" }.reversed()
+                            ContestTab.ONGOING -> contests.filter { it.phase == "CODING" }
+                            ContestTab.PAST -> contests.filter { it.phase == "FINISHED" }
+                        }
+                        ContestList(contests = filteredContests, navController = navController)
+                    }
                 }
             }
         }

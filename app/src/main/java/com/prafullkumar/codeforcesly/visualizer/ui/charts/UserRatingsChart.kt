@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerData
 import ir.ehsannarmani.compose_charts.LineChart
@@ -39,7 +40,9 @@ fun UserRatingGraph(
                 )
             ),
             labelProperties = LabelProperties(
-                labels = visualizerData.ratingGraphDates, enabled = false
+                labels = visualizerData.ratingGraphDates,
+                enabled = false,
+                textStyle = TextStyle.Default
             ),
             indicatorProperties = HorizontalIndicatorProperties(
                 enabled = true,

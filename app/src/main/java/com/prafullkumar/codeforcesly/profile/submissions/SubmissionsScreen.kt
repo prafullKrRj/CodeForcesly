@@ -10,6 +10,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -38,6 +39,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -51,9 +53,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.prafullkumar.codeforcesly.MainScreens
 import com.prafullkumar.codeforcesly.R
 import com.prafullkumar.codeforcesly.common.ErrorScreen
 import com.prafullkumar.codeforcesly.common.model.userstatus.SubmissionDto
@@ -62,7 +66,7 @@ import com.prafullkumar.codeforcesly.common.model.userstatus.SubmissionDto
 @Composable
 fun SubmissionsScreen(
     viewModel: SubmissionsViewModel,
-    onNavigateBack: () -> Unit
+    navController: NavController,
 ) {
     val submissionsState = viewModel.submissions.collectAsLazyPagingItems()
 
@@ -71,36 +75,53 @@ fun SubmissionsScreen(
             TopAppBar(
                 title = { Text("Submissions") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = navController::popBackStack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
         }
     ) { padding ->
-        SubmissionContent(submissionsState, padding)
+        SubmissionContent(submissionsState, padding, navController)
     }
 }
 
 @Composable
 private fun SubmissionContent(
     submissionsState: LazyPagingItems<SubmissionDto>,
-    padding: PaddingValues
+    padding: PaddingValues,
+    navController: NavController
 ) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(padding),
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(16.dp)
+        contentPadding = PaddingValues(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        if (submissionsState.loadState.refresh is LoadState.Loading) {
+            item {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+        }
+
         items(
             count = submissionsState.itemCount,
             key = { it }
         ) { index ->
             val submission = submissionsState[index]
             submission?.let {
-                SubmissionCard(submission = it)
+                SubmissionCard(submission = it, toSubmission = {
+                    navController.navigate(
+                        MainScreens.WebView(
+                            url = "https://codeforces.com/contest/${submission.contestId}/submission/${submission.id}",
+                            title = "Submission",
+                        )
+                    )
+                })
             }
         }
 
@@ -132,6 +153,7 @@ private fun SubmissionContent(
 fun SubmissionCard(
     submission: SubmissionDto,
     modifier: Modifier = Modifier,
+    toSubmission: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -201,7 +223,18 @@ fun SubmissionCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Verdict Status
-            submission.verdict?.let { VerdictChip(verdict = it) }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                submission.verdict?.let { VerdictChip(verdict = it) }
+
+//                TextButton(onClick = toSubmission) {
+//                    Text("Submission ->")
+//                }
+            }
+
 
             // Expanded Content
             AnimatedVisibility(
