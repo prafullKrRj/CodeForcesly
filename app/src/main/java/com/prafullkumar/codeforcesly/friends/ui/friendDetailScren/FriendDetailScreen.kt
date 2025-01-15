@@ -98,7 +98,7 @@ fun VisualizerContent(viewModel: FriendDetailViewModel) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when (val state = visualizerState) {
             is FriendsDetailState.Error -> {
-                ErrorScreen(state.message, onRetry = viewModel::loadData)
+                ErrorScreen("Error try retrying..", onRetry = viewModel::loadData)
             }
 
             FriendsDetailState.Loading -> {
@@ -122,7 +122,7 @@ private fun SubmissionsContent(viewModel: FriendDetailViewModel, navController: 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when (val state = submissionsState) {
             is FriendsDetailState.Error -> {
-                ErrorScreen(state.message, onRetry = viewModel::loadData)
+                ErrorScreen("Error try retrying..", onRetry = viewModel::loadData)
             }
 
             FriendsDetailState.Loading -> {
@@ -171,7 +171,7 @@ private fun FriendInfoScreen(viewModel: FriendDetailViewModel) {
             }
 
             is FriendsDetailState.Error -> {
-                ErrorScreen(friendsData.message, onRetry = viewModel::getFriendInfo)
+                ErrorScreen("Error try retrying..", onRetry = viewModel::getFriendInfo)
             }
 
             else -> {

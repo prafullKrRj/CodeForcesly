@@ -38,7 +38,7 @@ fun ContestQuestions(
     val contestState by viewModel.state.collectAsState()
     when (val state = contestState) {
         is Resource.Error -> {
-            ErrorScreen(state.message)
+            ErrorScreen("Error loading try refreshing..", onRetry = viewModel::load)
         }
 
         Resource.Loading -> {

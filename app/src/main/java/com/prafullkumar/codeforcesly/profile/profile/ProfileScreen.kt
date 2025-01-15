@@ -76,7 +76,7 @@ fun ProfileScreen(
 
                     is ProfileUiState.Error -> {
                         ErrorScreen(
-                            message = state.message,
+                            message = "Error Loading try refreshing..",
                             onRetry = viewModel::getUserInformation
                         )
                     }

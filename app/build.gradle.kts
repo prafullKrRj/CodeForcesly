@@ -87,5 +87,5 @@ dependencies {
     implementation(libs.accompanist.swiperefresh)
 
     implementation(libs.compose.charts)
-    implementation(kotlin("reflect"))
+//    implementation(kotlin("reflect"))
 }

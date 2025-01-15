@@ -310,7 +310,7 @@ fun NavController.navigateToProblemWebView(problem: Problem) {
     this.navigate(
         MainScreens.WebView(
             "https://codeforces.com/problemset/problem/${problem.contestId}/${problem.index}",
-            problem.index
+            problem.name
         )
     )
 }

@@ -42,7 +42,7 @@ fun VisualizerScreen(viewModel: VisualizerViewModel) {
 
                 is Resource.Error -> {
                     ErrorScreen(
-                        (uiState as Resource.Error).message,
+                        "Error try retrying..",
                         onRetry = viewModel::getUserData
                     )
                 }

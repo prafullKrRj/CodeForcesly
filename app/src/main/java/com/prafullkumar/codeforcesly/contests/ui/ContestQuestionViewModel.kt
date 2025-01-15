@@ -32,6 +32,9 @@ class ContestQuestionViewModel @Inject constructor(
     var contestId by mutableStateOf(savedStateHandle.get<Int>("contestId"))
 
     init {
+        load()
+    }
+    fun load() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val response = apiService.getParticularContestProblems(getUrl)
@@ -46,7 +49,6 @@ class ContestQuestionViewModel @Inject constructor(
             }
         }
     }
-
     private val getUrl =
         "https://codeforces.com/api/contest.standings?contestId=${savedStateHandle.get<Int>("contestId")}&from=1&count=1&showUnofficial=true"
 }
