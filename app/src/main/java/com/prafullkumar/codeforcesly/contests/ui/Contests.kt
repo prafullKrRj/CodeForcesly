@@ -93,7 +93,9 @@ fun ContestsScreen(
                         modifier = Modifier.fillMaxSize()
                     ) { page ->
                         val filteredContests = when (ContestTab.entries[page]) {
-                            ContestTab.UPCOMING -> contests.filter { it.phase == "BEFORE" }.reversed()
+                            ContestTab.UPCOMING -> contests.filter { it.phase == "BEFORE" }
+                                .reversed()
+
                             ContestTab.ONGOING -> contests.filter { it.phase == "CODING" }
                             ContestTab.PAST -> contests.filter { it.phase == "FINISHED" }
                         }

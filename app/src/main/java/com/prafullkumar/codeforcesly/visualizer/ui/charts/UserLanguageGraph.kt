@@ -36,7 +36,7 @@ fun UserLanguagesGraph(
         Pie(
             label = language,
             data = frequency.first.toDouble(),
-            color = getRandomMaterialColor(),
+            color = frequency.second,
             selectedColor = Color.Green
         )
     }

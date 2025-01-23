@@ -34,6 +34,7 @@ class ContestQuestionViewModel @Inject constructor(
     init {
         load()
     }
+
     fun load() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -49,6 +50,7 @@ class ContestQuestionViewModel @Inject constructor(
             }
         }
     }
+
     private val getUrl =
         "https://codeforces.com/api/contest.standings?contestId=${savedStateHandle.get<Int>("contestId")}&from=1&count=1&showUnofficial=true"
 }

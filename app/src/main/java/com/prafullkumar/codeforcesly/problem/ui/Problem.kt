@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.prafullkumar.codeforcesly.R
+import com.prafullkumar.codeforcesly.common.ErrorScreen
 import com.prafullkumar.codeforcesly.problem.domain.model.Problem
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,6 +67,7 @@ fun ProblemsScreen(
         isRefreshing = viewModel.isRefreshing
     ) {
         Scaffold(
+            Modifier.fillMaxSize(),
             topBar = {
                 TopAppBar(
                     title = { Text("Codeforces Problems") },
@@ -80,7 +82,9 @@ fun ProblemsScreen(
                 if (uiState.isLoading) {
                     LoadingIndicator()
                 } else if (uiState.error != null) {
-                    ErrorMessage(error = uiState.error!!)
+                    ErrorScreen("Error in Loading try refreshing..") {
+                        viewModel.refreshState()
+                    }
                 } else {
                     ProblemsContent(
                         problems = uiState.problems,

@@ -181,7 +181,7 @@ fun AppNavigation() {
                 SettingsScreen(viewModel = hiltViewModel(), onLogoutSuccess = {
                     viewModels.clear()
                     navController.navigate(Screen.Auth) {
-                        popUpTo(Screen.Auth) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
                 }, navController = navController, onChangeHandleSuccess = {
                     val profileViewModel: ProfileViewModel =
