@@ -19,6 +19,7 @@ class SubmissionsViewModel @Inject constructor(
     val submissions = Pager(
         config = PagingConfig(
             pageSize = 30,
+            initialLoadSize = 30,
             prefetchDistance = 5,
             enablePlaceholders = false
         ),

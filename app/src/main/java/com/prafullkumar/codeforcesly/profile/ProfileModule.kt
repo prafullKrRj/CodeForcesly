@@ -2,6 +2,7 @@ package com.prafullkumar.codeforcesly.profile
 
 import android.app.Application
 import com.prafullkumar.codeforcesly.common.SharedPrefManager
+import com.prafullkumar.codeforcesly.onBoarding.data.local.UserDao
 import com.prafullkumar.codeforcesly.profile.profile.ProfileApiService
 import com.prafullkumar.codeforcesly.profile.profile.ProfileRepository
 import com.prafullkumar.codeforcesly.profile.profile.ProfileRepositoryImpl
@@ -21,9 +22,10 @@ object ProfileModule {
     fun provideCodeforcesRepository(
         api: ProfileApiService,
         context: Application,
-        prefManager: SharedPrefManager
+        prefManager: SharedPrefManager,
+        userDao: UserDao
     ): ProfileRepository {
-        return ProfileRepositoryImpl(context = context, api = api, prefManager)
+        return ProfileRepositoryImpl(context = context, api = api, prefManager, userDao)
     }
 
     @Provides

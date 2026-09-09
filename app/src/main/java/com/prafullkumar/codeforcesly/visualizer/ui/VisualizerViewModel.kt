@@ -3,16 +3,16 @@ package com.prafullkumar.codeforcesly.visualizer.ui
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.prafullkumar.codeforcesly.common.Resource
 import com.prafullkumar.codeforcesly.common.model.userrating.Rating
 import com.prafullkumar.codeforcesly.common.model.userstatus.SubmissionDto
-import com.prafullkumar.codeforcesly.visualizer.domain.UserData
 import com.prafullkumar.codeforcesly.visualizer.domain.VisualizerRepository
-import com.prafullkumar.codeforcesly.visualizer.ui.charts.getRandomMaterialColor
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -23,60 +23,78 @@ import java.util.Locale
 import javax.inject.Inject
 
 data class VisualizerData(
-    var ratingGraphRating: List<Double> = mutableListOf(),
-    var ratingGraphDates: List<String> = mutableListOf(),
-    var tagsFrequency: Map<String, Int> = mutableMapOf(),
-    var verdictFrequency: Map<String?, Pair<Int, Color>> = mutableMapOf(),
-    var indexCounts: Map<String, Int> = mutableMapOf(),
-    var languageFrequency: Map<String?, Pair<Int, Color>> = mutableMapOf()
+    val ratingGraphRating: List<Double> = emptyList(),
+    val ratingGraphDates: List<String> = emptyList(),
+    val latestContestName: String = "",
+    val latestRatingDelta: Int? = null,
+    val latestRank: Int? = null,
+    val tagsFrequency: Map<String, Int> = emptyMap(),
+    val verdictFrequency: Map<String, Int> = emptyMap(),
+    val indexCounts: Map<String, Int> = emptyMap(),
+    val languageFrequency: Map<String, Int> = emptyMap()
 )
 
 @HiltViewModel
 class VisualizerViewModel @Inject constructor(
     private val repository: VisualizerRepository
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow<Resource<UserData>>(Resource.Loading)
+    private val _uiState = MutableStateFlow<Resource<Unit>>(Resource.Loading)
     val uiState = _uiState.asStateFlow()
+    private var loadJob: Job? = null
 
 
     var visualizerData by mutableStateOf(VisualizerData())
+    var isRefreshing by mutableStateOf(false)
 
     init {
         getUserData()
     }
 
-    fun getUserData() {
-        if (uiState.value is Resource.Success) return
-        _uiState.update {
-            Resource.Loading
+    fun getUserData(forceRefresh: Boolean = false) {
+        loadJob?.cancel()
+        val hasExistingData = visualizerData != VisualizerData()
+        isRefreshing = forceRefresh && hasExistingData
+        if (!hasExistingData) {
+            _uiState.update {
+                Resource.Loading
+            }
         }
-        viewModelScope.launch {
+        loadJob = viewModelScope.launch(Dispatchers.IO) {
             try {
-                val userData = repository.getUserData()
+                val userData = repository.getUserData(forceRefresh)
                 visualizerData = VisualizerDataGenerator.getVisualizerData(
                     userData.submissions,
                     userData.ratings
                 )
                 _uiState.update {
-                    Resource.Success(userData)
+                    Resource.Success(Unit)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                e.printStackTrace()
-                _uiState.update {
-                    Resource.Error("Error: ${e.message}")
+                if (!hasExistingData) {
+                    _uiState.update {
+                        Resource.Error("Error: ${e.message}")
+                    }
                 }
+            } finally {
+                isRefreshing = false
             }
         }
     }
 }
 
 object VisualizerDataGenerator {
-    private val dateFormat = SimpleDateFormat("MMM yyyy", Locale.getDefault())
-
     fun getVisualizerData(submissions: List<SubmissionDto>, ratings: List<Rating>): VisualizerData {
+        val chronologicalRatings = ratings.sortedBy { it.ratingUpdateTimeSeconds }
+        val latestRating = chronologicalRatings.lastOrNull()
+        val chartRatings = sampleRatings(chronologicalRatings)
         return VisualizerData(
-            ratingGraphRating = getRatingGraphData(ratings),
-            ratingGraphDates = getRatingGraphDates(ratings),
+            ratingGraphRating = getRatingGraphData(chartRatings),
+            ratingGraphDates = getRatingGraphDates(chartRatings),
+            latestContestName = latestRating?.contestName.orEmpty(),
+            latestRatingDelta = latestRating?.let { it.newRating - it.oldRating },
+            latestRank = latestRating?.rank,
             tagsFrequency = getTagsFrequency(submissions),
             verdictFrequency = getVerdictFrequency(submissions),
             indexCounts = getSolvedIndexes(submissions),
@@ -84,11 +102,26 @@ object VisualizerDataGenerator {
         )
     }
 
+    private fun sampleRatings(ratings: List<Rating>): List<Rating> {
+        if (ratings.size <= MAX_RATING_POINTS) return ratings
+        val bucketSize = (ratings.size + MAX_RATING_POINTS - 1) / MAX_RATING_POINTS
+        return ratings.chunked(bucketSize).flatMap { bucket ->
+            val indexedRatings = bucket.withIndex()
+            listOf(
+                indexedRatings.minBy { it.value.newRating },
+                indexedRatings.maxBy { it.value.newRating }
+            ).distinctBy { it.index }
+                .sortedBy { it.index }
+                .map { it.value }
+        }
+    }
+
     private fun getRatingGraphData(ratings: List<Rating>): List<Double> {
         return ratings.map { it.newRating.toDouble() }
     }
 
     private fun getRatingGraphDates(ratings: List<Rating>): List<String> {
+        val dateFormat = SimpleDateFormat("MMM yyyy", Locale.getDefault())
         return ratings.map { dateFormat.format(Date(it.ratingUpdateTimeSeconds * 1000L)) }
     }
 
@@ -97,22 +130,28 @@ object VisualizerDataGenerator {
             .eachCount()
     }
 
-    private fun getVerdictFrequency(userSubmissions: List<SubmissionDto>): Map<String?, Pair<Int, Color>> {
-        return userSubmissions.groupBy { it.verdict }.mapValues { it.value.size }
-            .map { (verdict, frequency) ->
-                verdict to Pair(frequency, getRandomMaterialColor())
-            }.toMap()
+    private fun getVerdictFrequency(userSubmissions: List<SubmissionDto>): Map<String, Int> {
+        return userSubmissions.groupingBy { it.verdict ?: "Unknown" }.eachCount()
     }
 
     private fun getSolvedIndexes(submissions: List<SubmissionDto>): Map<String, Int> {
-        return submissions.filter { it.problem?.index != null && it.problem.index.isNotBlank() }
-            .groupingBy { it.problem?.index!! }.eachCount()
+        return submissions.asSequence()
+            .filter { it.verdict == "OK" }
+            .mapNotNull { submission ->
+                val problem = submission.problem ?: return@mapNotNull null
+                val index = problem.index?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                val problemKey = "${problem.contestId ?: "archive"}-$index"
+                problemKey to index
+            }
+            .distinctBy { it.first }
+            .groupingBy { it.second }
+            .eachCount()
+            .toSortedMap()
     }
 
-    private fun getLanguageFrequency(userSubmissions: List<SubmissionDto>): Map<String?, Pair<Int, Color>> {
-        return userSubmissions.groupBy { it.programmingLanguage }.mapValues { it.value.size }
-            .map { (language, frequency) ->
-                language to Pair(frequency, getRandomMaterialColor())
-            }.toMap()
+    private fun getLanguageFrequency(userSubmissions: List<SubmissionDto>): Map<String, Int> {
+        return userSubmissions.groupingBy { it.programmingLanguage ?: "Unknown" }.eachCount()
     }
+
+    private const val MAX_RATING_POINTS = 240
 }

@@ -19,3 +19,11 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Retrofit reads suspend continuation generic signatures and HTTP annotations at runtime.
+-keepattributes Signature,InnerClasses,EnclosingMethod,RuntimeVisibleAnnotations,RuntimeVisibleParameterAnnotations,AnnotationDefault
+-keep interface com.prafullkumar.codeforcesly.**ApiService { *; }
+-keep class com.prafullkumar.codeforcesly.common.model.** { *; }
+-keep class com.prafullkumar.codeforcesly.contests.domain.models.** { *; }
+-keep class com.prafullkumar.codeforcesly.problem.domain.model.** { *; }
+-keep interface kotlin.coroutines.Continuation { *; }

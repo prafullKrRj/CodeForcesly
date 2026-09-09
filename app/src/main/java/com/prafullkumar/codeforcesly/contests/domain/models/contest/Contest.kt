@@ -18,5 +18,5 @@ data class Contest(
     @SerializedName("relativeTimeSeconds")
     val relativeTimeSeconds: Long?,
     @SerializedName("participants")
-    val participants: Int
+    val participants: Int?
 )

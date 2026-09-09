@@ -2,7 +2,9 @@ package com.prafullkumar.codeforcesly.visualizer.domain
 
 import com.prafullkumar.codeforcesly.common.model.userrating.Rating
 import com.prafullkumar.codeforcesly.common.model.userstatus.SubmissionDto
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class UserData(
     val handle: String,
     val ratings: List<Rating>,

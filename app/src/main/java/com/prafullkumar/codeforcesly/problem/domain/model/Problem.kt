@@ -16,7 +16,7 @@ data class Problem(
     @SerializedName("rating")
     val rating: Double? = 0.0,
     @SerializedName("tags")
-    val tags: List<String>,
+    val tags: List<String>? = null,
     @SerializedName("type")
     val type: String?
 )

@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 
 data class ContestResponse(
     @SerializedName("status")
-    val status: String,
+    val status: String?,
     @SerializedName("result")
-    val contests: List<Contest>
+    val contests: List<Contest>?
 )

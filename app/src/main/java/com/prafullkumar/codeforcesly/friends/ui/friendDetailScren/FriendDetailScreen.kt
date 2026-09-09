@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
@@ -16,6 +17,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -24,6 +26,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,11 +37,19 @@ import com.prafullkumar.codeforcesly.common.ErrorScreen
 import com.prafullkumar.codeforcesly.profile.profile.ProfileContent
 import com.prafullkumar.codeforcesly.profile.submissions.SubmissionCard
 import com.prafullkumar.codeforcesly.visualizer.ui.charts.CodeforcesCharts
+import com.prafullkumar.codeforcesly.ui.theme.AppSpacing
 import kotlinx.coroutines.launch
 
 enum class Tabs {
     PROFILE, SUBMISSIONS, VISUALIZER
 }
+
+private val Tabs.label: String
+    get() = when (this) {
+        Tabs.PROFILE -> "Profile"
+        Tabs.SUBMISSIONS -> "Submissions"
+        Tabs.VISUALIZER -> "Progress"
+    }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,11 +59,23 @@ fun FriendDetailScreen(viewModel: FriendDetailViewModel, navController: NavContr
     Scaffold(
         Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(title = { Text("${viewModel.handle}") }, navigationIcon = {
-                IconButton(onClick = navController::popBackStack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                }
-            })
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(viewModel.handle ?: "Friend")
+                        Text(
+                            text = "Public profile",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = navController::popBackStack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+            )
         },
     ) { paddingValues ->
         val tabs = Tabs.entries.toTypedArray()
@@ -64,28 +87,36 @@ fun FriendDetailScreen(viewModel: FriendDetailViewModel, navController: NavContr
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            TabRow(selectedTabIndex = pagerState.currentPage) {
+            TabRow(
+                selectedTabIndex = pagerState.currentPage,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ) {
                 tabs.forEachIndexed { index, tab ->
-                    Tab(text = { Text(tab.name) },
+                    Tab(text = { Text(tab.label) },
                         selected = pagerState.currentPage == index,
                         onClick = {
                             scope.launch {
                                 pagerState.animateScrollToPage(index)
                             }
-                            if (index != 0) {
-                                viewModel.loadData()
-                            }
                         })
                 }
             }
-            HorizontalPager(state = pagerState) { page ->
-                if (page != 0) {
-                    viewModel.loadData()
-                }
-                when (tabs[page]) {
-                    Tabs.PROFILE -> FriendInfoScreen(viewModel)
-                    Tabs.SUBMISSIONS -> SubmissionsContent(viewModel, navController)
-                    Tabs.VISUALIZER -> VisualizerContent(viewModel)
+            Box(Modifier.fillMaxSize()) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .widthIn(max = 1040.dp)
+                        .align(Alignment.Center),
+                ) { page ->
+                    LaunchedEffect(page) {
+                        if (page != 0) viewModel.loadData()
+                    }
+                    when (tabs[page]) {
+                        Tabs.PROFILE -> FriendInfoScreen(viewModel)
+                        Tabs.SUBMISSIONS -> SubmissionsContent(viewModel, navController)
+                        Tabs.VISUALIZER -> VisualizerContent(viewModel)
+                    }
                 }
             }
         }
@@ -98,7 +129,7 @@ fun VisualizerContent(viewModel: FriendDetailViewModel) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when (val state = visualizerState) {
             is FriendsDetailState.Error -> {
-                ErrorScreen("Error try retrying..", onRetry = viewModel::loadData)
+                ErrorScreen(state.message, onRetry = viewModel::loadData)
             }
 
             FriendsDetailState.Loading -> {
@@ -110,7 +141,7 @@ fun VisualizerContent(viewModel: FriendDetailViewModel) {
             }
 
             else -> {
-                Text("Empty")
+                Text("No progress data yet.")
             }
         }
     }
@@ -122,7 +153,7 @@ private fun SubmissionsContent(viewModel: FriendDetailViewModel, navController: 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when (val state = submissionsState) {
             is FriendsDetailState.Error -> {
-                ErrorScreen("Error try retrying..", onRetry = viewModel::loadData)
+                ErrorScreen(state.message, onRetry = viewModel::loadData)
             }
 
             FriendsDetailState.Loading -> {
@@ -132,10 +163,14 @@ private fun SubmissionsContent(viewModel: FriendDetailViewModel, navController: 
             is FriendsDetailState.Success -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.medium),
+                    contentPadding = PaddingValues(AppSpacing.screen),
                 ) {
-                    items(state.data) { submission ->
+                    items(
+                        items = state.data,
+                        key = { "${it.contestId}-${it.id}" },
+                        contentType = { "submission" },
+                    ) { submission ->
                         SubmissionCard(submission, toSubmission = {
                             navController.navigate(
                                 MainScreens.WebView(
@@ -149,7 +184,7 @@ private fun SubmissionsContent(viewModel: FriendDetailViewModel, navController: 
             }
 
             else -> {
-                Text("Empty")
+                Text("No submissions found.")
             }
         }
     }
@@ -161,7 +196,7 @@ private fun FriendInfoScreen(viewModel: FriendDetailViewModel) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when (val friendsData = uiState) {
             is FriendsDetailState.Loading -> {
-                Text("Loading")
+                CircularProgressIndicator()
             }
 
             is FriendsDetailState.Success -> {
@@ -171,11 +206,11 @@ private fun FriendInfoScreen(viewModel: FriendDetailViewModel) {
             }
 
             is FriendsDetailState.Error -> {
-                ErrorScreen("Error try retrying..", onRetry = viewModel::getFriendInfo)
+                ErrorScreen(friendsData.message, onRetry = viewModel::getFriendInfo)
             }
 
             else -> {
-                Text("Empty")
+                Text("No profile data found.")
             }
         }
     }

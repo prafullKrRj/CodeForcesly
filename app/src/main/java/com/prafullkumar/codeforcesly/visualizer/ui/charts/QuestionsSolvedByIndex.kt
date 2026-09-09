@@ -9,11 +9,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.remember
+import com.prafullkumar.codeforcesly.ui.theme.AppSpacing
 import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerData
 import ir.ehsannarmani.compose_charts.ColumnChart
 import ir.ehsannarmani.compose_charts.models.BarProperties
@@ -24,17 +28,23 @@ import ir.ehsannarmani.compose_charts.models.DrawStyle
 fun QuestionSolvedByIndexColumnChart(
     modifier: Modifier = Modifier, visualizerData: VisualizerData
 ) {
-    val data = visualizerData.indexCounts.map { (index, count) ->
-        Bars(
-            label = index,
-            values = listOf(
-                Bars.Data(
-                    label = "Questions Solved",
-                    value = count.toDouble(),
-                    color = Brush.radialGradient(listOf(Color(0xFF23af92), Color(0xFF2BC0A1)))
-                )
-            ),
-        )
+    if (visualizerData.indexCounts.isEmpty()) return
+    val colors = MaterialTheme.colorScheme
+    val data = remember(visualizerData.indexCounts, colors) {
+        visualizerData.indexCounts.toSortedMap().map { (index, count) ->
+            Bars(
+                label = index,
+                values = listOf(
+                    Bars.Data(
+                        label = "Questions Solved",
+                        value = count.toDouble(),
+                        color = Brush.verticalGradient(
+                            listOf(colors.primary, colors.primaryContainer)
+                        )
+                    )
+                ),
+            )
+        }
     }
 
     Row(
@@ -45,9 +55,15 @@ fun QuestionSolvedByIndexColumnChart(
     ) {
         ColumnChart(
             modifier = modifier
-                .padding(horizontal = 22.dp)
-                .width((data.size * 50).dp)
-                .height(300.dp),
+                .padding(horizontal = AppSpacing.extraLarge)
+                .width(maxOf(data.size * 56, 280).dp)
+                .height(300.dp)
+                .semantics {
+                    contentDescription = "Solved problems by index chart. " +
+                        data.joinToString {
+                            "${it.label} ${it.values.firstOrNull()?.value?.toInt() ?: 0}"
+                        }
+                },
             data = data,
             barProperties = BarProperties(
                 spacing = 3.dp, thickness = 20.dp, style = DrawStyle.Fill

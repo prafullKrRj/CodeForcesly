@@ -76,7 +76,7 @@ fun ProfileScreen(
 
                     is ProfileUiState.Error -> {
                         ErrorScreen(
-                            message = "Error Loading try refreshing..",
+                            message = state.message,
                             onRetry = viewModel::getUserInformation
                         )
                     }
@@ -84,6 +84,7 @@ fun ProfileScreen(
                     is ProfileUiState.Success ->
                         ProfileContent(
                             state.user,
+                            recentSubmissions = viewModel.recentSubmissions,
                             onNavigateToSubmissions = onNavigateToSubmissions
                         )
                 }
