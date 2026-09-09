@@ -1,23 +1,22 @@
 package com.prafullkumar.codeforcesly.friends.ui
 
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.prafullkumar.codeforcesly.R
+import com.prafullkumar.codeforcesly.ui.theme.AppSpacing
 
 @Composable
 fun NoFriendsScreen(
@@ -27,50 +26,53 @@ fun NoFriendsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(AppSpacing.extraLarge),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Illustration
-        Image(
-            painter = painterResource(id = R.drawable.no_friends),
-            contentDescription = "No friends illustration",
-            modifier = Modifier
-                .size(200.dp)
-                .padding(bottom = 32.dp)
-        )
+        Surface(
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            shape = MaterialTheme.shapes.large
+        ) {
+            Box(
+                modifier = Modifier.size(96.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("CF", style = MaterialTheme.typography.headlineMedium)
+            }
+        }
 
         // Title
         Text(
-            text = "No Friends Yet",
+            text = "No profiles saved",
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(top = AppSpacing.extraLarge, bottom = AppSpacing.small)
         )
 
         // Description
         Text(
-            text = "Start connecting with people and build your network. Add friends to see their updates and share moments together!",
+            text = "Save handles you want to compare. Keep their rank, rating, and recent activity nearby.",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             modifier = Modifier
-                .padding(horizontal = 32.dp)
-                .padding(bottom = 32.dp)
+                .padding(horizontal = AppSpacing.large)
+                .padding(bottom = AppSpacing.extraLarge)
         )
 
         // Add Friends Button
         Button(
             onClick = onAddFriendsClick,
             modifier = Modifier
-                .height(48.dp)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = AppSpacing.large),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary
             )
         ) {
             Text(
-                text = "Add Friends",
+                text = "Add profile",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onPrimary
             )

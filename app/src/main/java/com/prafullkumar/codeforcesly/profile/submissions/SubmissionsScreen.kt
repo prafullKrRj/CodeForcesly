@@ -8,7 +8,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -39,6 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -60,6 +62,7 @@ import com.prafullkumar.codeforcesly.MainScreens
 import com.prafullkumar.codeforcesly.R
 import com.prafullkumar.codeforcesly.common.ErrorScreen
 import com.prafullkumar.codeforcesly.common.model.userstatus.SubmissionDto
+import com.prafullkumar.codeforcesly.ui.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,7 +75,16 @@ fun SubmissionsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Submissions") },
+                title = {
+                    Column {
+                        Text("Submissions")
+                        Text(
+                            "${submissionsState.itemCount} loaded · newest first",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = navController::popBackStack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -85,63 +97,79 @@ fun SubmissionsScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SubmissionContent(
     submissionsState: LazyPagingItems<SubmissionDto>,
     padding: PaddingValues,
     navController: NavController
 ) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+    val refreshLoadState = submissionsState.loadState.refresh
+    androidx.compose.material3.pulltorefresh.PullToRefreshBox(
+        modifier = Modifier.fillMaxSize(),
+        isRefreshing = refreshLoadState is LoadState.Loading && submissionsState.itemCount > 0,
+        onRefresh = submissionsState::refresh
     ) {
-        if (submissionsState.loadState.refresh is LoadState.Loading) {
-            item {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            if (refreshLoadState is LoadState.Error && submissionsState.itemCount == 0) {
+                ErrorScreen(
+                    message = "Could not load submissions",
+                    onRetry = submissionsState::retry
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .widthIn(max = 1040.dp)
+                        .align(Alignment.TopCenter),
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.small),
+                    contentPadding = PaddingValues(AppSpacing.screen),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (refreshLoadState is LoadState.Loading) {
+                        item {
+                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                    }
+
+                    items(
+                        count = submissionsState.itemCount,
+                        key = { index ->
+                            submissionsState.peek(index)?.let { "${it.contestId}-${it.id}" }
+                                ?: "placeholder-$index"
+                        },
+                        contentType = { "submission" }
+                    ) { index ->
+                        val submission = submissionsState[index]
+                        submission?.let {
+                            SubmissionCard(submission = it, toSubmission = {
+                                navController.navigate(
+                                    MainScreens.WebView(
+                                        url = "https://codeforces.com/contest/${submission.contestId}/submission/${submission.id}",
+                                        title = "Submission",
+                                    )
+                                )
+                            })
+                        }
+                    }
+
+                    when (submissionsState.loadState.append) {
+                        is LoadState.Loading -> item { CircularProgressIndicator() }
+                        is LoadState.Error -> item {
+                            ErrorScreen(
+                                message = "Could not load more submissions",
+                                onRetry = submissionsState::retry
+                            )
+                        }
+                        else -> Unit
+                    }
                 }
-            }
-        }
-
-        items(
-            count = submissionsState.itemCount,
-            key = { it }
-        ) { index ->
-            val submission = submissionsState[index]
-            submission?.let {
-                SubmissionCard(submission = it, toSubmission = {
-                    navController.navigate(
-                        MainScreens.WebView(
-                            url = "https://codeforces.com/contest/${submission.contestId}/submission/${submission.id}",
-                            title = "Submission",
-                        )
-                    )
-                })
-            }
-        }
-
-        when (submissionsState.loadState.append) {
-            is LoadState.Loading -> {
-                item {
-                    CircularProgressIndicator()
-                }
-            }
-
-            is LoadState.Error -> {
-                item {
-                    ErrorScreen(
-                        message = "An error occurred",
-                        onRetry = { submissionsState.retry() }
-                    )
-                }
-            }
-
-            else -> {
-
             }
         }
     }
@@ -157,6 +185,7 @@ fun SubmissionCard(
     var expanded by remember { mutableStateOf(false) }
 
     Card(
+        onClick = { expanded = !expanded },
         modifier = modifier
             .fillMaxWidth()
             .animateContentSize(
@@ -165,19 +194,15 @@ fun SubmissionCard(
                     stiffness = Spring.StiffnessLow
                 )
             ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp,
-            pressedElevation = 8.dp
-        ),
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         )
     ) {
         Column(
             modifier = Modifier
-                .clickable { expanded = !expanded }
-                .padding(16.dp)
+                .padding(AppSpacing.large)
         ) {
             // Problem Title and Rating Badge
             Row(
@@ -199,7 +224,7 @@ fun SubmissionCard(
                 submission.problem?.rating?.let { RatingBadge(rating = it) }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(AppSpacing.small))
 
             // Contest and Time Info
             Row(
@@ -219,7 +244,7 @@ fun SubmissionCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(AppSpacing.medium))
 
             // Verdict Status
 
@@ -228,10 +253,7 @@ fun SubmissionCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 submission.verdict?.let { VerdictChip(verdict = it) }
-
-//                TextButton(onClick = toSubmission) {
-//                    Text("Submission ->")
-//                }
+                TextButton(onClick = toSubmission) { Text("Open") }
             }
 
 
@@ -242,11 +264,11 @@ fun SubmissionCard(
                 exit = fadeOut() + shrinkVertically()
             ) {
                 Column(
-                    modifier = Modifier.padding(top = 12.dp)
+                    modifier = Modifier.padding(top = AppSpacing.medium)
                 ) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(AppSpacing.medium))
 
                     // Programming Language
                     Row(
@@ -259,7 +281,7 @@ fun SubmissionCard(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(AppSpacing.small))
                         submission.programmingLanguage?.let {
                             Text(
                                 text = it,
@@ -280,7 +302,7 @@ fun SubmissionCard(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(AppSpacing.small))
                         Text(
                             text = formatMemory(submission.memoryConsumedBytes?.toLong() ?: 0),
                             style = MaterialTheme.typography.bodyMedium,
@@ -299,7 +321,7 @@ fun SubmissionCard(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(AppSpacing.small))
                         Text(
                             text = "${submission.timeConsumedMillis} ms",
                             style = MaterialTheme.typography.bodyMedium,
@@ -309,11 +331,11 @@ fun SubmissionCard(
 
                     // Problem Tags
                     if (submission.problem?.tags?.isNotEmpty() == true) {
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(AppSpacing.medium))
                         FlowRow(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                            horizontalArrangement = Arrangement.spacedBy(AppSpacing.extraSmall),
+                            verticalArrangement = Arrangement.spacedBy(AppSpacing.extraSmall)
                         ) {
                             submission.problem.tags.forEach { tag ->
                                 TagChip(tag = tag)
@@ -328,26 +350,26 @@ fun SubmissionCard(
 
 @Composable
 fun RatingBadge(rating: Int) {
+    val colors = MaterialTheme.colorScheme
     val backgroundColor = when {
-        rating < 1200 -> Color(0xFF808080) // Gray
-        rating < 1400 -> Color(0xFF008000) // Green
-        rating < 1600 -> Color(0xFF03A89E) // Cyan
-        rating < 1900 -> Color(0xFF0000FF) // Blue
-        rating < 2100 -> Color(0xFF800080) // Purple
-        rating < 2400 -> Color(0xFFFF8C00) // Orange
-        else -> Color(0xFFFF0000) // Red
+        rating < 1200 -> colors.onSurfaceVariant
+        rating < 1400 -> colors.secondary
+        rating < 1600 -> colors.tertiary
+        rating < 1900 -> colors.primary
+        rating < 2100 -> colors.primary
+        else -> colors.error
     }
 
     Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = backgroundColor,
-        modifier = Modifier.padding(start = 8.dp)
+        shape = MaterialTheme.shapes.small,
+        color = backgroundColor.copy(alpha = 0.16f),
+        modifier = Modifier.padding(start = AppSpacing.small)
     ) {
         Text(
             text = "$rating",
             style = MaterialTheme.typography.labelMedium,
-            color = Color.White,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            color = backgroundColor,
+            modifier = Modifier.padding(horizontal = AppSpacing.small, vertical = AppSpacing.extraSmall)
         )
     }
 }
@@ -362,7 +384,7 @@ fun VerdictChip(verdict: String) {
     }
 
     Surface(
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.small,
         color = backgroundColor,
         modifier = Modifier
             .wrapContentWidth()
@@ -379,7 +401,7 @@ fun VerdictChip(verdict: String) {
 @Composable
 fun TagChip(tag: String) {
     Surface(
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
         modifier = Modifier.height(24.dp)
     ) {

@@ -1,26 +1,34 @@
 package com.prafullkumar.codeforcesly
 
 import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -98,9 +106,6 @@ sealed interface MainScreens : Screen {
 // AppNavigation.kt
 @Composable
 fun AppNavigation() {
-    val viewModels = rememberSaveable {
-        mutableMapOf<Any, ViewModel>()
-    }
     val navController = rememberNavController()
     val pref = LocalContext.current.getSharedPreferences(
         SharedPrefManager.SHARED_PREF_NAME, Context.MODE_PRIVATE
@@ -110,6 +115,7 @@ fun AppNavigation() {
     NavHost(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
             .systemBarsPadding(),
         navController = navController,
         startDestination = if (isAuthenticated) Screen.Main else Screen.Auth
@@ -132,46 +138,43 @@ fun AppNavigation() {
             composable<MainScreens.Profile> {
                 MainScreen(
                     navController = navController,
-                    startDestination = MainScreens.Profile,
-                    viewModels = viewModels
+                    startDestination = MainScreens.Profile
 
                 )
             }
             composable<MainScreens.Contests> {
                 MainScreen(
                     navController = navController,
-                    startDestination = MainScreens.Contests,
-                    viewModels = viewModels
+                    startDestination = MainScreens.Contests
                 )
             }
             composable<MainScreens.ContestDetailScreen> {
-                ContestQuestions(navController = navController)
+                val route = it.toRoute<MainScreens.ContestDetailScreen>()
+                ContestQuestions(
+                    contestId = route.contestId,
+                    navController = navController
+                )
             }
             composable<MainScreens.Friends> {
                 MainScreen(
                     navController = navController,
-                    startDestination = MainScreens.Friends,
-                    viewModels = viewModels
+                    startDestination = MainScreens.Friends
                 )
             }
             composable<MainScreens.Problems> {
                 MainScreen(
                     navController = navController,
-                    startDestination = MainScreens.Problems,
-                    viewModels = viewModels
+                    startDestination = MainScreens.Problems
                 )
             }
             composable<MainScreens.Visualizer> {
                 MainScreen(
                     navController = navController,
-                    startDestination = MainScreens.Visualizer,
-                    viewModels = viewModels
+                    startDestination = MainScreens.Visualizer
                 )
             }
             composable<MainScreens.Submissions> {
-                val viewModel = viewModels.getOrPut(MainScreens.Submissions) {
-                    hiltViewModel<SubmissionsViewModel>()
-                } as SubmissionsViewModel
+                val viewModel = hiltViewModel<SubmissionsViewModel>()
                 SubmissionsScreen(viewModel, navController)
             }
             composable<MainScreens.FriendDetail> {
@@ -179,15 +182,14 @@ fun AppNavigation() {
             }
             composable<MainScreens.Settings> {
                 SettingsScreen(viewModel = hiltViewModel(), onLogoutSuccess = {
-                    viewModels.clear()
                     navController.navigate(Screen.Auth) {
                         popUpTo(0) { inclusive = true }
                     }
                 }, navController = navController, onChangeHandleSuccess = {
-                    val profileViewModel: ProfileViewModel =
-                        viewModels[MainScreens.Profile] as ProfileViewModel
-                    profileViewModel.clearData()
-                    viewModels.remove(MainScreens.Profile)
+                    navController.navigate(MainScreens.Profile) {
+                        popUpTo(MainScreens.Profile) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 })
             }
             composable<MainScreens.WebView> {
@@ -203,106 +205,142 @@ fun AppNavigation() {
 
 @Composable
 fun MainScreen(
-    navController: NavController, startDestination: Any, viewModels: MutableMap<Any, ViewModel>
+    navController: NavController, startDestination: MainScreens
 ) {
-    Scaffold(bottomBar = {
-        NavigationBar {
-            NavigationBarItem(icon = {
-                Icon(
-                    Icons.Filled.Person, contentDescription = "Profile"
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val destinations = mainDestinations()
+        if (maxWidth >= 600.dp) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                NavigationRail(
+                    containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainer
+                ) {
+                    destinations.forEach { item ->
+                        NavigationRailItem(
+                            selected = startDestination == item.destination,
+                            onClick = { navController.navigateFromMain(item.destination) },
+                            icon = { Icon(item.icon, contentDescription = item.label) },
+                            label = { Text(item.label) }
+                        )
+                    }
+                }
+                MainDestinationContent(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .weight(1f),
+                    navController = navController,
+                    startDestination = startDestination
                 )
-            },
-                label = { Text("Profile") },
-                selected = startDestination == MainScreens.Profile,
-                onClick = { navController.navigate(MainScreens.Profile) })
-            NavigationBarItem(icon = {
-                Icon(
-                    ImageVector.vectorResource(R.drawable.baseline_timeline_24),
-                    contentDescription = "Profile"
+            }
+        } else {
+            Scaffold(
+                containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+                bottomBar = {
+                    NavigationBar(
+                        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainer
+                    ) {
+                        destinations.forEach { item ->
+                            NavigationBarItem(
+                                selected = startDestination == item.destination,
+                                onClick = { navController.navigateFromMain(item.destination) },
+                                icon = { Icon(item.icon, contentDescription = item.label) },
+                                label = { Text(item.label) }
+                            )
+                        }
+                    }
+                }
+            ) { paddingValues ->
+                MainDestinationContent(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    navController = navController,
+                    startDestination = startDestination
                 )
-            },
-                label = { Text("Visualizer") },
-                selected = startDestination == MainScreens.Visualizer,
-                onClick = { navController.navigate(MainScreens.Visualizer) })
-            NavigationBarItem(icon = {
-                Icon(
-                    ImageVector.vectorResource(R.drawable.baseline_event_note_24),
-                    contentDescription = "Contests"
-                )
-            },
-                label = { Text("Contests") },
-                selected = startDestination == MainScreens.Contests,
-                onClick = { navController.navigate(MainScreens.Contests) })
-            NavigationBarItem(icon = {
-                Icon(
-                    ImageVector.vectorResource(R.drawable.baseline_group_24),
-                    contentDescription = "Friends"
-                )
-            },
-                label = { Text("Friends") },
-                selected = startDestination == MainScreens.Friends,
-                onClick = { navController.navigate(MainScreens.Friends) })
-            NavigationBarItem(icon = {
-                Icon(
-                    ImageVector.vectorResource(R.drawable.baseline_code_24),
-                    contentDescription = "Problems"
-                )
-            },
-                label = { Text("Problems") },
-                selected = startDestination == MainScreens.Problems,
-                onClick = { navController.navigate(MainScreens.Problems) })
+            }
         }
-    }) { paddingValues ->
+    }
+}
+
+private data class MainDestination(
+    val destination: MainScreens,
+    val label: String,
+    val icon: ImageVector
+)
+
+@Composable
+private fun mainDestinations(): List<MainDestination> = listOf(
+    MainDestination(MainScreens.Profile, "Profile", Icons.Filled.Person),
+    MainDestination(
+        MainScreens.Visualizer,
+        "Visualizer",
+        ImageVector.vectorResource(R.drawable.baseline_timeline_24)
+    ),
+    MainDestination(
+        MainScreens.Contests,
+        "Contests",
+        ImageVector.vectorResource(R.drawable.baseline_event_note_24)
+    ),
+    MainDestination(
+        MainScreens.Friends,
+        "Friends",
+        ImageVector.vectorResource(R.drawable.baseline_group_24)
+    ),
+    MainDestination(
+        MainScreens.Problems,
+        "Problems",
+        ImageVector.vectorResource(R.drawable.baseline_code_24)
+    )
+)
+
+@Composable
+private fun MainDestinationContent(
+    modifier: Modifier,
+    navController: NavController,
+    startDestination: MainScreens
+) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Box(
-            Modifier
-                .fillMaxSize()
-                .padding(paddingValues), contentAlignment = Alignment.Center
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth()
+                .widthIn(max = 1040.dp)
         ) {
             when (startDestination) {
                 MainScreens.Profile -> {
-                    val viewModel = viewModels.getOrPut(MainScreens.Profile) {
-                        hiltViewModel<ProfileViewModel>()
-                    } as ProfileViewModel
-                    ProfileScreen(viewModel = viewModel, onNavigateToSubmissions = {
+                    val viewModel = hiltViewModel<ProfileViewModel>()
+                    ProfileScreen(viewModel, onNavigateToSubmissions = {
                         navController.navigate(MainScreens.Submissions)
                     }, onNavigateToSettings = {
                         navController.navigate(MainScreens.Settings)
                     })
                 }
-
                 MainScreens.Contests -> {
-                    val viewModel = viewModels.getOrPut(MainScreens.Contests) {
-                        hiltViewModel<ContestsViewModel>()
-                    } as ContestsViewModel
+                    val viewModel = hiltViewModel<ContestsViewModel>()
                     ContestsScreen(viewModel, navController = navController)
                 }
-
                 MainScreens.Friends -> {
-                    val viewModel = viewModels.getOrPut(MainScreens.Friends) {
-                        hiltViewModel<FriendsViewModel>()
-                    } as FriendsViewModel
-                    FriendsScreen(
-                        navController, viewModel = viewModel
-                    )
+                    val viewModel = hiltViewModel<FriendsViewModel>()
+                    FriendsScreen(navController, viewModel)
                 }
-
                 MainScreens.Visualizer -> {
-                    val viewModel = viewModels.getOrPut(MainScreens.Visualizer) {
-                        hiltViewModel<VisualizerViewModel>()
-                    } as VisualizerViewModel
+                    val viewModel = hiltViewModel<VisualizerViewModel>()
                     VisualizerScreen(viewModel)
                 }
-
                 MainScreens.Problems -> {
-                    val viewModel = viewModels.getOrPut(MainScreens.Problems) {
-                        hiltViewModel<ProblemsViewModel>()
-                    } as ProblemsViewModel
-                    ProblemsScreen(viewModel = viewModel) {
-                        navController.navigateToProblemWebView(it)
-                    }
+                    val viewModel = hiltViewModel<ProblemsViewModel>()
+                    ProblemsScreen(viewModel) { navController.navigateToProblemWebView(it) }
                 }
+                else -> Unit
             }
         }
+    }
+}
+
+private fun NavController.navigateFromMain(destination: MainScreens) {
+    navigate(destination) {
+        popUpTo(MainScreens.Profile) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
     }
 }
 

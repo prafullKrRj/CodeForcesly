@@ -13,6 +13,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+data class AddFriendUiState(
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
+
 @HiltViewModel
 class FriendsViewModel @Inject constructor(
     private val repository: FriendsRepository
@@ -27,11 +32,23 @@ class FriendsViewModel @Inject constructor(
 
     private val _dialogState = MutableStateFlow(false)
     val dialogState = _dialogState.asStateFlow()
+    private val _addFriendState = MutableStateFlow(AddFriendUiState())
+    val addFriendState = _addFriendState.asStateFlow()
 
     fun addFriend(handle: String, name: String) {
         viewModelScope.launch {
-            repository.addFriend(handle, name)
-            _dialogState.value = false
+            if (_addFriendState.value.isLoading) return@launch
+            _addFriendState.value = AddFriendUiState(isLoading = true)
+            repository.addFriend(handle.trim(), name.trim())
+                .onSuccess {
+                    _addFriendState.value = AddFriendUiState()
+                    _dialogState.value = false
+                }
+                .onFailure { error ->
+                    _addFriendState.value = AddFriendUiState(
+                        error = error.message ?: "Could not verify profile"
+                    )
+                }
         }
     }
 
@@ -47,6 +64,11 @@ class FriendsViewModel @Inject constructor(
 
     fun hideDialog() {
         _dialogState.value = false
+        _addFriendState.value = AddFriendUiState()
+    }
+
+    fun clearAddFriendError() {
+        _addFriendState.update { it.copy(error = null) }
     }
 
     private val _isRefreshing = MutableStateFlow(false)

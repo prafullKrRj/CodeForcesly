@@ -1,5 +1,6 @@
 package com.prafullkumar.codeforcesly.settings
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,14 +11,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -26,6 +28,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,8 +54,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.prafullkumar.codeforcesly.MainScreens
+import com.prafullkumar.codeforcesly.common.ThemeMode
 import com.prafullkumar.codeforcesly.common.openPrivacyPolicy
+import com.prafullkumar.codeforcesly.ui.theme.AppSpacing
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,6 +70,7 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+    val themeMode by viewModel.themeMode.collectAsState()
     var showHandleDialog by remember { mutableStateOf(false) }
     var newHandle by rememberSaveable { mutableStateOf("") }
     var logoutAlertDialog by rememberSaveable { mutableStateOf(false) }
@@ -79,17 +84,16 @@ fun SettingsScreen(
     LaunchedEffect(uiState.isHandleChangeSuccess) { if (uiState.isHandleChangeSuccess) onChangeHandleSuccess() }
     Scaffold(topBar = {
         TopAppBar(title = {
-            Text("Settings")
+            Column {
+                Text("Settings")
+                Text(
+                    "Account and preferences",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }, navigationIcon = {
-            IconButton(onClick = {
-                if (uiState.isHandleChangeSuccess) {
-                    navController.popBackStack()
-                    navController.popBackStack()
-                    navController.navigate(MainScreens.Profile)
-                } else {
-                    navController.popBackStack()
-                }
-            }) {
+            IconButton(onClick = { navController.popBackStack() }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back"
                 )
@@ -100,33 +104,40 @@ fun SettingsScreen(
             modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
+                .padding(AppSpacing.screen)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .widthIn(max = 1040.dp)
+                    .align(Alignment.TopCenter)
                     .verticalScroll(scrollState),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.medium)
             ) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    shape = MaterialTheme.shapes.large,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                            .padding(AppSpacing.extraLarge),
+                        verticalArrangement = Arrangement.spacedBy(AppSpacing.small)
                     ) {
                         Text(
                             text = "Account Settings",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold
+                            style = MaterialTheme.typography.titleLarge
                         )
 
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = AppSpacing.small),
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -136,17 +147,20 @@ fun SettingsScreen(
                             Column {
                                 Text(
                                     text = "Current Handle",
-                                    fontSize = 16.sp,
+                                    style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
                                     text = uiState.handle.ifEmpty { "Not set" },
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Medium
+                                    style = MaterialTheme.typography.titleMedium
                                 )
                             }
 
-                            FilledTonalButton(onClick = { showHandleDialog = true }) {
+                            FilledTonalButton(onClick = {
+                                newHandle = uiState.handle
+                                viewModel.clearError()
+                                showHandleDialog = true
+                            }) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
                                     contentDescription = "Change Handle",
@@ -159,25 +173,71 @@ fun SettingsScreen(
                     }
                 }
 
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(AppSpacing.extraLarge),
+                        verticalArrangement = Arrangement.spacedBy(AppSpacing.small)
+                    ) {
+                        Text("Appearance", style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            "Choose how CodeForcesly follows your device.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(AppSpacing.small)
+                        ) {
+                            ThemeMode.entries.forEach { mode ->
+                                FilterChip(
+                                    selected = themeMode == mode,
+                                    onClick = { viewModel.setThemeMode(mode) },
+                                    label = { Text(mode.label) },
+                                    leadingIcon = if (themeMode == mode) {
+                                        {
+                                            Icon(
+                                                Icons.Default.Check,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    } else null,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    }
+                }
+
                 Button(
                     onClick = { logoutAlertDialog = true },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
                     )
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ExitToApp, contentDescription = "Logout"
+                        imageVector = Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Logout"
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Logout")
                 }
                 FilledTonalButton(onClick = {
                     context.openPrivacyPolicy()
-                }) {
+                }, modifier = Modifier.fillMaxWidth()) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                        contentDescription = "Change Handle",
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "Privacy Policy",
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -209,8 +269,15 @@ fun SettingsScreen(
             text = {
                 OutlinedTextField(
                     value = newHandle,
-                    onValueChange = { newHandle = it },
+                    onValueChange = {
+                        newHandle = it
+                        viewModel.clearError()
+                    },
                     label = { Text("New Handle") },
+                    isError = uiState.error != null,
+                    supportingText = uiState.error?.let { message ->
+                        { Text(message) }
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -218,10 +285,15 @@ fun SettingsScreen(
             confirmButton = {
                 Button(onClick = {
                     viewModel.updateHandle(newHandle)
-                    showHandleDialog = false
-                    newHandle = ""
-                }) {
-                    Text("Update")
+                }, enabled = newHandle.isNotBlank() && !uiState.isLoading) {
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Update")
+                    }
                 }
             },
             dismissButton = {
@@ -249,3 +321,6 @@ fun SettingsScreen(
             })
     }
 }
+
+private val ThemeMode.label: String
+    get() = name.lowercase().replaceFirstChar { it.titlecase() }

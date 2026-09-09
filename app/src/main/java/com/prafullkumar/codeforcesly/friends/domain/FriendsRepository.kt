@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface FriendsRepository {
 
-    suspend fun addFriend(handle: String, name: String)
+    suspend fun addFriend(handle: String, name: String): Result<Unit>
     suspend fun deleteFriend(friend: Friend)
     fun getAllFriends(): Flow<List<Friend>>
     suspend fun refreshFriendsData()

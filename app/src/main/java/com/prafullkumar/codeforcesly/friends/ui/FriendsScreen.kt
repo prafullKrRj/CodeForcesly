@@ -1,7 +1,7 @@
 package com.prafullkumar.codeforcesly.friends.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,13 +10,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -51,15 +52,18 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.prafullkumar.codeforcesly.MainScreens
 import com.prafullkumar.codeforcesly.friends.data.local.Friend
+import com.prafullkumar.codeforcesly.ui.theme.AppSpacing
 import java.util.Locale
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FriendsScreen(
     navController: NavController,
@@ -68,35 +72,45 @@ fun FriendsScreen(
 ) {
     val friends by viewModel.allFriends.collectAsState()
     val showDialog by viewModel.dialogState.collectAsState()
+    val addFriendState by viewModel.addFriendState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
-    if (isRefreshing) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+    if (friends.isEmpty()) {
+        PullToRefreshBox(
+            modifier = modifier.fillMaxSize(),
+            isRefreshing = isRefreshing,
+            onRefresh = viewModel::refreshFriends
         ) {
-            CircularProgressIndicator()
+            Box(modifier = Modifier.fillMaxSize()) {
+                NoFriendsScreen(
+                    onAddFriendsClick = { viewModel.showDialog() },
+                    modifier = Modifier.fillMaxSize()
+                )
+                if (isRefreshing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(AppSpacing.large)
+                    )
+                }
+            }
         }
     } else {
-        if (friends.isEmpty()) {
-            NoFriendsScreen(
-                onAddFriendsClick = { viewModel.showDialog() },
-                modifier = modifier
-            )
-        } else {
-            FriendsContent(
-                friends = friends,
-                navController = navController,
-                onAddFriendClick = { viewModel.showDialog() },
-                viewModel = viewModel,
-                isRefreshing = isRefreshing
-            )
-        }
+        FriendsContent(
+            friends = friends,
+            navController = navController,
+            onAddFriendClick = { viewModel.showDialog() },
+            viewModel = viewModel,
+            isRefreshing = isRefreshing
+        )
     }
 
     if (showDialog) {
         AddFriendDialog(
             onDismiss = { viewModel.hideDialog() },
-            onConfirm = { handle, name -> viewModel.addFriend(handle, name) }
+            onConfirm = { handle, name -> viewModel.addFriend(handle, name) },
+            isLoading = addFriendState.isLoading,
+            error = addFriendState.error,
+            onClearError = viewModel::clearAddFriendError
         )
     }
 }
@@ -121,13 +135,23 @@ fun FriendsContent(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Friends") },
+                    title = {
+                        Column {
+                            Text("People to watch")
+                            Text(
+                                "${friends.size} saved profiles",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
                 )
             },
             floatingActionButton = {
                 FloatingActionButton(
                     onClick = onAddFriendClick,
-                    containerColor = MaterialTheme.colorScheme.primary
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ) {
                     Icon(Icons.Filled.Add, contentDescription = "Add Friend")
                 }
@@ -141,10 +165,13 @@ fun FriendsContent(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(horizontal = AppSpacing.screen),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                        vertical = AppSpacing.small
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.small)
                 ) {
-                    items(friends) { friend ->
+                    items(items = friends, key = { it.handle }, contentType = { "friend" }) { friend ->
                         FriendCard(
                             friend = friend,
                             onDelete = { viewModel.deleteFriend(friend) },
@@ -168,36 +195,50 @@ fun FriendCard(
     modifier: Modifier = Modifier
 ) {
     Card(
+        onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(140.dp)
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 4.dp,
-            pressedElevation = 8.dp
-        ),
+            .heightIn(min = 124.dp),
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(AppSpacing.large),
+            horizontalArrangement = Arrangement.spacedBy(AppSpacing.large),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(90.dp)
+                    .size(68.dp)
                     .clip(CircleShape)
             ) {
-                AsyncImage(
-                    model = friend.avatar.ifEmpty { "https://via.placeholder.com/100" },
-                    contentDescription = "Avatar",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+                if (friend.avatar.isNotBlank()) {
+                    AsyncImage(
+                        model = friend.avatar,
+                        contentDescription = "Avatar for ${friend.handle}",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = friend.handle.take(2).uppercase(Locale.getDefault()),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -205,7 +246,7 @@ fun FriendCard(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    Color.Black.copy(alpha = 0.3f)
+                                    MaterialTheme.colorScheme.scrim.copy(alpha = 0.24f)
                                 )
                             )
                         )
@@ -214,25 +255,29 @@ fun FriendCard(
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.extraSmall)
             ) {
                 Text(
                     text = friend.name,
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = friend.handle,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(AppSpacing.small),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Surface(
                         color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = RoundedCornerShape(4.dp)
+                        shape = MaterialTheme.shapes.small
                     ) {
                         Text(
                             text = friend.rank.replaceFirstChar {
@@ -241,7 +286,7 @@ fun FriendCard(
                                 ) else it.toString()
                             },
                             style = MaterialTheme.typography.labelMedium,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            modifier = Modifier.padding(horizontal = AppSpacing.small, vertical = AppSpacing.extraSmall),
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
@@ -260,7 +305,7 @@ fun FriendCard(
 
             IconButton(
                 onClick = onDelete,
-                modifier = Modifier.alpha(0.7f)
+                modifier = Modifier.alpha(0.78f)
             ) {
                 Icon(
                     Icons.Filled.Delete,
@@ -275,7 +320,10 @@ fun FriendCard(
 @Composable
 fun AddFriendDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, String) -> Unit
+    onConfirm: (String, String) -> Unit,
+    isLoading: Boolean = false,
+    error: String? = null,
+    onClearError: () -> Unit = {}
 ) {
     var handle by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
@@ -284,7 +332,9 @@ fun AddFriendDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
+                .imePadding()
                 .padding(16.dp),
+            shape = MaterialTheme.shapes.large,
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
             Column(
@@ -294,23 +344,31 @@ fun AddFriendDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "Add CodeForces Friend",
+                    text = "Add profile",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
 
                 OutlinedTextField(
                     value = handle,
-                    onValueChange = { handle = it },
-                    label = { Text("CodeForces Handle") },
+                    onValueChange = {
+                        handle = it
+                        onClearError()
+                    },
+                    label = { Text("Codeforces handle") },
+                    isError = error != null,
+                    supportingText = error?.let { message -> { Text(message) } },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Friend's Name") },
+                    onValueChange = {
+                        name = it
+                        onClearError()
+                    },
+                    label = { Text("Display name") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -330,9 +388,16 @@ fun AddFriendDialog(
                                 onConfirm(handle, name)
                             }
                         },
-                        enabled = handle.isNotBlank() && name.isNotBlank()
+                        enabled = handle.isNotBlank() && name.isNotBlank() && !isLoading
                     ) {
-                        Text("Add")
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("Add")
+                        }
                     }
                 }
             }

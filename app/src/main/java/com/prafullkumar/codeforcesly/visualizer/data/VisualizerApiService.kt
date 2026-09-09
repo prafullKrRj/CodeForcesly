@@ -14,7 +14,9 @@ interface VisualizerApiService {
 
     @GET("user.status")
     suspend fun getUserStatus(
-        @Query("handle") handle: String
+        @Query("handle") handle: String,
+        @Query("from") from: Int,
+        @Query("count") count: Int
     ): UserStatus
 
 }

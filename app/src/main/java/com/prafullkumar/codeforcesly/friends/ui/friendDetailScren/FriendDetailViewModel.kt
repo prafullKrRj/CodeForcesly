@@ -11,6 +11,7 @@ import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerData
 import com.prafullkumar.codeforcesly.visualizer.ui.VisualizerDataGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -54,8 +55,11 @@ class FriendDetailViewModel @Inject constructor(
             _submissions.update { FriendsDetailState.Loading }
             _visualizerData.update { FriendsDetailState.Loading }
             try {
-                val ratingHistory = repository.getFriendRatings(handle ?: "")
-                val submissions = repository.getFriendSubmissions(handle ?: "")
+                val (ratingHistory, submissions) = coroutineScope {
+                    val ratings = async { repository.getFriendRatings(handle ?: "") }
+                    val submissions = async { repository.getFriendSubmissions(handle ?: "") }
+                    ratings.await() to submissions.await()
+                }
                 _submissions.update { FriendsDetailState.Success(submissions) }
                 _visualizerData.update {
                     FriendsDetailState.Success(
@@ -65,9 +69,12 @@ class FriendDetailViewModel @Inject constructor(
                         )
                     )
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                _submissions.update { FriendsDetailState.Error(e.message ?: "Error") }
-                _visualizerData.update { FriendsDetailState.Error("Error") }
+                val message = e.message ?: "Could not load friend activity"
+                _submissions.update { FriendsDetailState.Error(message) }
+                _visualizerData.update { FriendsDetailState.Error(message) }
             }
         }
     }
@@ -83,11 +90,15 @@ class FriendDetailViewModel @Inject constructor(
                 try {
                     val friendData = repository.getFriendData(handle)
                     _friendInfoState.value = FriendsDetailState.Success(friendData)
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
-                    _friendInfoState.value = FriendsDetailState.Error("Error")
+                    _friendInfoState.value = FriendsDetailState.Error(
+                        e.message ?: "Could not load friend profile"
+                    )
                 }
             } else {
-                _friendInfoState.value = FriendsDetailState.Error("Error")
+                _friendInfoState.value = FriendsDetailState.Error("Friend handle unavailable")
             }
         }
     }
@@ -116,9 +127,10 @@ class FriendDetailRepositoryImpl @Inject constructor(
     private suspend fun getFriendInfo(handle: String): UserInfo {
         val response = apiService.getUsersInfo(handle)
         if (response.status == "OK") {
-            return response.result[0]
+            return response.result.firstOrNull()
+                ?: throw Exception("Public profile unavailable")
         } else {
-            throw Exception("Error")
+            throw Exception("Codeforces response: ${response.status.ifBlank { "UNKNOWN" }}")
         }
     }
 
@@ -127,7 +139,7 @@ class FriendDetailRepositoryImpl @Inject constructor(
         if (response.status == "OK") {
             return response.result
         } else {
-            throw Exception("Error")
+            throw Exception("Codeforces submissions unavailable")
         }
     }
 
@@ -136,7 +148,7 @@ class FriendDetailRepositoryImpl @Inject constructor(
         if (response.status == "OK") {
             return response.result
         } else {
-            throw Exception("Error")
+            throw Exception("Codeforces rating history unavailable")
         }
     }
 

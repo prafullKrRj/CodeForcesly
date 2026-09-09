@@ -14,7 +14,7 @@ android {
     defaultConfig {
         applicationId = "com.prafullkumar.codeforcesly"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 2
         versionName = "1.3"
 
@@ -23,7 +23,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -75,7 +76,6 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     ksp(libs.hilt.compiler)
-    implementation(libs.symbol.processing.api)
     implementation(libs.androidx.hilt.navigation.compose)
 
     implementation(libs.androidx.room.runtime)
@@ -84,7 +84,6 @@ dependencies {
 //
 
     implementation(libs.androidx.paging.compose)
-    implementation(libs.accompanist.swiperefresh)
 
     implementation(libs.compose.charts)
 //    implementation(kotlin("reflect"))

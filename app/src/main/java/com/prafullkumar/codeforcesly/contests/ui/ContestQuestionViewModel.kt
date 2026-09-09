@@ -12,6 +12,7 @@ import com.prafullkumar.codeforcesly.contests.domain.models.contestDetails.Conte
 import com.prafullkumar.codeforcesly.problem.domain.model.Problem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -36,21 +37,32 @@ class ContestQuestionViewModel @Inject constructor(
     }
 
     fun load() {
+        _state.value = Resource.Loading
+        val contestId = savedStateHandle.get<Int>("contestId")
+        if (contestId == null || contestId <= 0) {
+            _state.value = Resource.Error("Contest could not be identified")
+            return
+        }
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val response = apiService.getParticularContestProblems(getUrl)
+                val response = apiService.getParticularContestProblems(getUrl(contestId))
                 if (response.status.lowercase() == "ok") {
-                    _state.update { Resource.Success(response.result.problems) }
+                    _state.update { Resource.Success(normalizeContestProblems(response.result.problems)) }
                     contestDetails = response.result.contest
                 } else {
                     _state.update { Resource.Error("Error Loading") }
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _state.update { Resource.Error(e.message ?: "Error") }
             }
         }
     }
 
-    private val getUrl =
-        "https://codeforces.com/api/contest.standings?contestId=${savedStateHandle.get<Int>("contestId")}&from=1&count=1&showUnofficial=true"
+    private fun getUrl(contestId: Int) =
+        "https://codeforces.com/api/contest.standings?contestId=$contestId"
 }
+
+internal fun normalizeContestProblems(problems: List<Problem>): List<Problem> =
+    problems.map { problem -> problem.copy(tags = problem.tags.orEmpty()) }
